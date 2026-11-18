@@ -1,0 +1,6 @@
+{
+  "name": "RKT-RKAS Generator",
+  "description": "Aplikasi penyusun draf Rencana Kerja Tahunan (RKT) dan Rencana Kegiatan dan Anggaran Sekolah (RKAS) otomatis dengan kalkulasi anggaran dan ekspor spreadsheet Excel/CSV.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

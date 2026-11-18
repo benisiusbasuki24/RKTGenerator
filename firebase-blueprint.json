@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "School": {
+      "title": "School Identity",
+      "description": "School profile and budget ceiling information",
+      "type": "object",
+      "properties": {
+        "namaSekolah": { "type": "string", "maxLength": 150 },
+        "npsn": { "type": "string", "maxLength": 30, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "jenjang": { "type": "string", "enum": ["PAUD/TK", "SD", "SMP", "SMA", "SMK", "SLB"] },
+        "tahunAnggaran": { "type": "string", "maxLength": 10, "pattern": "^[0-9]+$" },
+        "alamat": { "type": "string", "maxLength": 250 },
+        "kecamatanKabKota": { "type": "string", "maxLength": 150 },
+        "kepalaSekolah": { "type": "string", "maxLength": 100 },
+        "nipKepalaSekolah": { "type": "string", "maxLength": 50 },
+        "bendahara": { "type": "string", "maxLength": 100 },
+        "nipBendahara": { "type": "string", "maxLength": 50 },
+        "paguAnggaran": { "type": "number", "minimum": 0 },
+        "tanggalDokumen": { "type": "string", "maxLength": 30 },
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["namaSekolah", "npsn", "tahunAnggaran", "userId"]
+    },
+    "RkasItem": {
+      "title": "RKAS Item",
+      "description": "Individual budget expenditure item linked to SNP and RKT activity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "snp": { "type": "string", "maxLength": 100 },
+        "kodeRekening": { "type": "string", "maxLength": 50 },
+        "jenisBelanja": { "type": "string", "enum": ["Belanja Barang & Jasa", "Belanja Modal", "Belanja Pegawai / Honorarium"] },
+        "uraianKegiatan": { "type": "string", "maxLength": 250 },
+        "rincianBelanja": { "type": "string", "maxLength": 300 },
+        "volume": { "type": "number", "minimum": 0.01 },
+        "satuan": { "type": "string", "maxLength": 50 },
+        "hargaSatuan": { "type": "number", "minimum": 0 },
+        "totalAnggaran": { "type": "number", "minimum": 0 },
+        "sumberDana": { "type": "string", "enum": ["BOS Reguler", "BOS Kinerja", "BOSP Daerah / BOP", "Dana Komite / Swadaya", "Lainnya"] },
+        "triwulan": { "type": "array", "items": { "type": "string" }, "maxItems": 4 },
+        "penanggungJawab": { "type": "string", "maxLength": 100 },
+        "prioritas": { "type": "string", "enum": ["Tinggi", "Sedang", "Rendah"] },
+        "keterangan": { "type": "string", "maxLength": 500 },
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "snp", "uraianKegiatan", "rincianBelanja", "volume", "hargaSatuan", "totalAnggaran", "sumberDana", "userId"]
+    }
+  },
+  "firestore": {
+    "/schools/{schoolId}": {
+      "schema": { "$ref": "School" },
+      "description": "School profile documents owned by user"
+    },
+    "/rkasItems/{itemId}": {
+      "schema": { "$ref": "RkasItem" },
+      "description": "RKAS items created by user"
+    }
+  }
+}

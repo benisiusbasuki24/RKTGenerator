@@ -1,0 +1,56 @@
+export type SumberDana =
+  | 'BOS Reguler'
+  | 'BOS Kinerja'
+  | 'BOSP Daerah / BOP'
+  | 'Dana Komite / Swadaya'
+  | 'Lainnya';
+
+export type Triwulan = 'TW I' | 'TW II' | 'TW III' | 'TW IV';
+
+export type Prioritas = 'Tinggi' | 'Sedang' | 'Rendah';
+
+export type JenisBelanja =
+  | 'Belanja Barang & Jasa'
+  | 'Belanja Modal'
+  | 'Belanja Pegawai / Honorarium';
+
+export interface RkasItem {
+  id: string;
+  snp: string;
+  kodeRekening: string;
+  jenisBelanja: JenisBelanja;
+  uraianKegiatan: string;
+  rincianBelanja: string;
+  volume: number;
+  satuan: string;
+  hargaSatuan: number;
+  totalAnggaran: number;
+  sumberDana: SumberDana;
+  triwulan: Triwulan[];
+  penanggungJawab: string;
+  prioritas: Prioritas;
+  keluaran: string;
+  keterangan: string;
+  createdAt: string;
+}
+
+export interface SchoolIdentity {
+  namaSekolah: string;
+  npsn: string;
+  jenjang: 'PAUD/TK' | 'SD' | 'SMP' | 'SMA' | 'SMK' | 'SLB';
+  tahunAnggaran: string;
+  alamat: string;
+  kecamatanKabKota: string;
+  kepalaSekolah: string;
+  nipKepalaSekolah: string;
+  bendahara: string;
+  nipBendahara: string;
+  paguAnggaran: number;
+  tanggalDokumen: string;
+}
+
+export interface KodeRekeningPreset {
+  kode: string;
+  uraian: string;
+  jenisBelanja: JenisBelanja;
+}

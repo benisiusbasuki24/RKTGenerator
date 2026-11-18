@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { Download } from 'lucide-react';
-import { SNP_DETAILS, SUMBER_DANA_LIST, TRIWULAN_LIST } from '../data/rkasConstants';
-import { RkasItem, SchoolIdentity, Triwulan } from '../types/rkas';
+import { BULAN_LIST, SNP_DETAILS, SUMBER_DANA_LIST } from '../data/rkasConstants';
+import { Bulan, RkasItem, SchoolIdentity } from '../types/rkas';
 import {
-  calculateQuarterlyAllocation,
+  calculateMonthlyAllocation,
   formatRupiah,
 } from '../utils/formatters';
 
@@ -33,25 +33,32 @@ export function RecapView({ items, school, onExportXlsx }: RecapViewProps) {
     });
   }, [items, totalBudget]);
 
-  const byTriwulan = useMemo(() => {
-    const totals: Record<Triwulan, number> = {
-      'TW I': 0,
-      'TW II': 0,
-      'TW III': 0,
-      'TW IV': 0,
+  const byBulan = useMemo(() => {
+    const totals: Record<Bulan, number> = {
+      Januari: 0,
+      Februari: 0,
+      Maret: 0,
+      April: 0,
+      Mei: 0,
+      Juni: 0,
+      Juli: 0,
+      Agustus: 0,
+      September: 0,
+      Oktober: 0,
+      November: 0,
+      Desember: 0,
     };
     items.forEach((item) => {
-      const alloc = calculateQuarterlyAllocation(item);
-      totals['TW I'] += alloc['TW I'];
-      totals['TW II'] += alloc['TW II'];
-      totals['TW III'] += alloc['TW III'];
-      totals['TW IV'] += alloc['TW IV'];
+      const alloc = calculateMonthlyAllocation(item);
+      BULAN_LIST.forEach((m) => {
+        totals[m] += alloc[m];
+      });
     });
-    return TRIWULAN_LIST.map((tw) => {
-      const total = totals[tw.value];
+    return BULAN_LIST.map((m) => {
+      const total = totals[m];
       const pct = totalBudget > 0 ? (total / totalBudget) * 100 : 0;
       return {
-        ...tw,
+        bulan: m,
         total,
         pct,
       };
@@ -121,7 +128,7 @@ export function RecapView({ items, school, onExportXlsx }: RecapViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Top 2-Column Ledger Recap: Sumber Dana + Triwulan */}
+      {/* Top 2-Column Ledger Recap: Sumber Dana + Bulan */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
@@ -169,22 +176,19 @@ export function RecapView({ items, school, onExportXlsx }: RecapViewProps) {
         <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200">
             <h2 className="font-display text-base font-semibold text-slate-900">
-              Proyeksi Pencairan per Triwulan
+              Proyeksi Pencairan per Bulan
             </h2>
             <p className="text-xs text-slate-500">
-              Pembagian otomatis berdasarkan jadwal triwulan tiap rincian belanja
+              Pembagian alokasi anggaran berdasarkan jadwal bulan pelaksanaan
             </p>
           </div>
-          <div className="divide-y divide-slate-100">
-            {byTriwulan.map((row) => (
-              <div key={row.value} className="px-6 py-3.5">
-                <div className="flex items-center justify-between gap-4 text-sm">
+          <div className="divide-y divide-slate-100 max-h-[420px] overflow-y-auto">
+            {byBulan.map((row) => (
+              <div key={row.bulan} className="px-6 py-3">
+                <div className="flex items-center justify-between gap-4 text-xs sm:text-sm">
                   <div>
                     <span className="font-medium text-slate-900">
-                      {row.label}
-                    </span>
-                    <span className="ml-2 text-xs text-slate-500">
-                      {row.months}
+                      {row.bulan}
                     </span>
                   </div>
                   <div className="text-right font-mono tabular-nums">
@@ -196,7 +200,7 @@ export function RecapView({ items, school, onExportXlsx }: RecapViewProps) {
                     </span>
                   </div>
                 </div>
-                <div className="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="mt-1.5 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-slate-700 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(100, row.pct)}%` }}
@@ -305,7 +309,7 @@ export function RecapView({ items, school, onExportXlsx }: RecapViewProps) {
       <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200">
           <h2 className="font-display text-base font-semibold text-slate-900">
-            Matriks Program & Kegiatan RKT ({rktMatrix.length} Kegiatan)
+            Matriks Program &amp; Kegiatan RKT ({rktMatrix.length} Kegiatan)
           </h2>
           <p className="text-xs text-slate-500">
             Ringkasan rencana kerja tahunan yang terhubung dengan pagu belanja RKAS
@@ -322,7 +326,7 @@ export function RecapView({ items, school, onExportXlsx }: RecapViewProps) {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
                   <th className="py-3 pl-6 pr-3 w-12 text-center">No</th>
-                  <th className="py-3 px-3">Uraian Kegiatan RKT & SNP</th>
+                  <th className="py-3 px-3">Uraian Kegiatan RKT &amp; SNP</th>
                   <th className="py-3 px-3 text-right">Item Belanja</th>
                   <th className="py-3 px-3">Sumber Dana</th>
                   <th className="py-3 px-3">Penanggung Jawab</th>

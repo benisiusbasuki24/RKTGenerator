@@ -1,4 +1,4 @@
-import { RkasItem, Triwulan } from '../types/rkas';
+import { Bulan, RkasItem } from '../types/rkas';
 
 export function formatRupiah(value: number): string {
   const safe = Number.isFinite(value) ? Math.round(value) : 0;
@@ -29,24 +29,32 @@ export function formatDateIndo(isoDate: string): string {
 }
 
 /**
- * Splits item.totalAnggaran across selected triwulan evenly without losing 1 Rupiah to rounding.
+ * Splits item.totalAnggaran across selected months evenly without losing 1 Rupiah to rounding.
  */
-export function calculateQuarterlyAllocation(item: RkasItem): Record<Triwulan, number> {
-  const result: Record<Triwulan, number> = {
-    'TW I': 0,
-    'TW II': 0,
-    'TW III': 0,
-    'TW IV': 0,
+export function calculateMonthlyAllocation(item: RkasItem): Record<Bulan, number> {
+  const result: Record<Bulan, number> = {
+    Januari: 0,
+    Februari: 0,
+    Maret: 0,
+    April: 0,
+    Mei: 0,
+    Juni: 0,
+    Juli: 0,
+    Agustus: 0,
+    September: 0,
+    Oktober: 0,
+    November: 0,
+    Desember: 0,
   };
 
-  const active = item.triwulan.length > 0 ? item.triwulan : (['TW I'] as Triwulan[]);
+  const active = item.bulan && item.bulan.length > 0 ? item.bulan : (['Januari'] as Bulan[]);
   const count = active.length;
   const total = Math.round(item.totalAnggaran);
   const base = Math.floor(total / count);
   const remainder = total - base * count;
 
-  active.forEach((tw, index) => {
-    result[tw] = base + (index === 0 ? remainder : 0);
+  active.forEach((m, index) => {
+    result[m] = base + (index === 0 ? remainder : 0);
   });
 
   return result;

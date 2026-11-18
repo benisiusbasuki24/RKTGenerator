@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { AppTab, HeaderBar } from './components/HeaderBar';
 import { PrintPreviewView } from './components/PrintPreviewView';
+import { RecapView } from './components/RecapView';
 import { RkasView } from './components/RkasView';
 import { RktView } from './components/RktView';
 import { RenstraView } from './components/RenstraView';
@@ -40,8 +41,8 @@ import {
 import { RkasItem, SchoolIdentity } from './types/rkas';
 import { exportRkasToCsv, exportRkasToXlsx } from './utils/exportSpreadsheet';
 
-const STORAGE_ITEMS_KEY = 'rkt_rkas_generator_items_v3';
-const STORAGE_SCHOOL_KEY = 'rkt_rkas_generator_school_v2';
+const STORAGE_ITEMS_KEY = 'rkt_rkas_generator_items_v4';
+const STORAGE_SCHOOL_KEY = 'rkt_rkas_generator_school_v3';
 
 function loadSavedItems(): RkasItem[] {
   try {
@@ -75,12 +76,38 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('rkas');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Auth listener & Firestore sync
+  // Auth listener & Firestore sync with email whitelist verification
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
-      setUser(firebaseUser);
-      setAuthLoading(false);
       if (firebaseUser) {
+        const email = firebaseUser.email || '';
+        const whitelist = school.registeredEmails || [
+          'benisiusbasuki24@guru.sd.belajar.id',
+          '@guru.sd.belajar.id',
+          '@bopkri.sch.id',
+          '@gmail.com',
+        ];
+
+        const isAllowed =
+          whitelist.length === 0 ||
+          whitelist.some((entry) => {
+            if (entry.startsWith('@')) {
+              return email.toLowerCase().endsWith(entry.toLowerCase());
+            }
+            return email.toLowerCase() === entry.toLowerCase();
+          });
+
+        if (!isAllowed) {
+          await signOut(auth);
+          setUser(null);
+          setAuthLoading(false);
+          setToastMessage(`Akses Ditolak: Email (${email}) belum terdaftar.`);
+          return;
+        }
+
+        setUser(firebaseUser);
+        setAuthLoading(false);
+
         try {
           const rkasQuery = query(
             collection(db, 'rkasItems'),
@@ -108,10 +135,13 @@ export default function App() {
         } catch (error) {
           console.error('Error loading cloud data:', error);
         }
+      } else {
+        setUser(null);
+        setAuthLoading(false);
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [school.registeredEmails]);
 
   // Save to localStorage and Firestore
   useEffect(() => {
@@ -155,12 +185,36 @@ export default function App() {
     setToastMessage(msg);
     window.setTimeout(() => {
       setToastMessage((prev) => (prev === msg ? null : prev));
-    }, 3200);
+    }, 3500);
   };
 
   const handleSignIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      const email = cred.user.email || '';
+      const whitelist = school.registeredEmails || [
+        'benisiusbasuki24@guru.sd.belajar.id',
+        '@guru.sd.belajar.id',
+        '@bopkri.sch.id',
+        '@gmail.com',
+      ];
+
+      const isAllowed =
+        whitelist.length === 0 ||
+        whitelist.some((entry) => {
+          if (entry.startsWith('@')) {
+            return email.toLowerCase().endsWith(entry.toLowerCase());
+          }
+          return email.toLowerCase() === entry.toLowerCase();
+        });
+
+      if (!isAllowed) {
+        await signOut(auth);
+        setUser(null);
+        showNotice(`Akses Ditolak: Email (${email}) belum terdaftar dalam whitelist aplikasi.`);
+        return;
+      }
+
       showNotice('Berhasil masuk dengan akun Google. Data disinkronkan ke cloud.');
     } catch (error) {
       console.error('Sign in error:', error);
@@ -284,7 +338,7 @@ export default function App() {
                 onClick={() => setActiveTab('identity')}
                 className="text-teal-700 hover:text-teal-800 font-medium underline underline-offset-4"
               >
-                Ubah Identitas
+                Ubah Identitas &amp; Akses
               </button>
             </div>
           </div>
@@ -329,6 +383,8 @@ export default function App() {
           />
         )}
 
+
+
         {activeTab === 'renstra' && <RenstraView school={school} />}
 
         {activeTab === 'print' && (
@@ -344,7 +400,7 @@ export default function App() {
             school={school}
             onSave={(updated) => {
               setSchool(updated);
-              showNotice('Identitas satuan pendidikan berhasil diperbarui.');
+              showNotice('Identitas satuan pendidikan dan daftar akses berhasil diperbarui.');
             }}
           />
         )}
@@ -355,8 +411,8 @@ export default function App() {
           <span>RKT-RKAS Generator &bull; SD BOPKRI Gondolayu</span>
           <span>
             {user
-              ? 'Tersinkronisasi ke Cloud Firestore (Firebase)'
-              : 'Tersimpan di peramban lokal · Masuk Google untuk sinkronisasi cloud'}
+              ? `Terotentikasi (${user.email}) · Tersinkronisasi ke Cloud Firestore`
+              : 'Tersimpan di peramban lokal · Masuk Google (Email terdaftar) untuk sinkronisasi cloud'}
           </span>
         </div>
       </footer>

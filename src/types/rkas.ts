@@ -5,7 +5,19 @@ export type SumberDana =
   | 'Dana Komite / Swadaya'
   | 'Lainnya';
 
-export type Triwulan = 'TW I' | 'TW II' | 'TW III' | 'TW IV';
+export type Bulan =
+  | 'Januari'
+  | 'Februari'
+  | 'Maret'
+  | 'April'
+  | 'Mei'
+  | 'Juni'
+  | 'Juli'
+  | 'Agustus'
+  | 'September'
+  | 'Oktober'
+  | 'November'
+  | 'Desember';
 
 export type Prioritas = 'Tinggi' | 'Sedang' | 'Rendah';
 
@@ -26,7 +38,7 @@ export interface RkasItem {
   hargaSatuan: number;
   totalAnggaran: number;
   sumberDana: SumberDana;
-  triwulan: Triwulan[];
+  bulan: Bulan[];
   penanggungJawab: string;
   prioritas: Prioritas;
   keluaran: string;
@@ -47,6 +59,7 @@ export interface SchoolIdentity {
   nipBendahara: string;
   paguAnggaran: number;
   tanggalDokumen: string;
+  registeredEmails?: string[];
 }
 
 export interface KodeRekeningPreset {
@@ -54,3 +67,4 @@ export interface KodeRekeningPreset {
   uraian: string;
   jenisBelanja: JenisBelanja;
 }
+

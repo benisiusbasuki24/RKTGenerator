@@ -1,10 +1,10 @@
 import {
+  Bulan,
   KodeRekeningPreset,
   Prioritas,
   RkasItem,
   SchoolIdentity,
   SumberDana,
-  Triwulan,
 } from '../types/rkas';
 
 export interface SnpDetail {
@@ -154,11 +154,19 @@ export const SUMBER_DANA_LIST: SumberDana[] = [
   'Lainnya',
 ];
 
-export const TRIWULAN_LIST: { value: Triwulan; label: string; months: string }[] = [
-  { value: 'TW I', label: 'TW I', months: 'Jan–Mar' },
-  { value: 'TW II', label: 'TW II', months: 'Apr–Jun' },
-  { value: 'TW III', label: 'TW III', months: 'Jul–Sep' },
-  { value: 'TW IV', label: 'TW IV', months: 'Okt–Des' },
+export const BULAN_LIST: Bulan[] = [
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
 
 export const PRIORITAS_LIST: Prioritas[] = ['Tinggi', 'Sedang', 'Rendah'];
@@ -244,6 +252,12 @@ export const DEFAULT_SCHOOL_IDENTITY: SchoolIdentity = {
   nipBendahara: '19820512 200801 2 003',
   paguAnggaran: 2440149600,
   tanggalDokumen: '2027-01-02',
+  registeredEmails: [
+    'benisiusbasuki24@guru.sd.belajar.id',
+    '@guru.sd.belajar.id',
+    '@bopkri.sch.id',
+    '@gmail.com',
+  ],
 };
 
 export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
@@ -259,7 +273,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 99875,
     totalAnggaran: 799000,
     sumberDana: 'BOS Reguler',
-    triwulan: ['TW I', 'TW III'],
+    bulan: ['Januari', 'Maret', 'Agustus'],
     penanggungJawab: 'FX. Suhari Irawan, S.E.',
     prioritas: 'Tinggi',
     keluaran: 'Murid mendapatkan pengalaman mengikuti lomba OSN dan mampu meningkatkan kompetensi berpikir ilmiah, kritis, dan efektif.',
@@ -278,7 +292,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 122000,
     totalAnggaran: 976000,
     sumberDana: 'BOS Reguler',
-    triwulan: ['TW II', 'TW IV'],
+    bulan: ['Februari', 'Mei', 'Oktober'],
     penanggungJawab: 'Ardi Herwantoro, S.Pd.Jas.',
     prioritas: 'Tinggi',
     keluaran: 'Murid mendapatkan pengalaman mengikuti lomba O2SN serta meningkatkan kompetensi, sportivitas, disiplin, dan kemampuan berpikir terarah dan efektif.',
@@ -297,7 +311,20 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 4700000,
     totalAnggaran: 56400000,
     sumberDana: 'BOS Reguler',
-    triwulan: ['TW I', 'TW II', 'TW III', 'TW IV'],
+    bulan: [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ],
     penanggungJawab: 'Dwi Nastiti Ken Utami',
     prioritas: 'Tinggi',
     keluaran: 'Pembayaran daya dan jasa terbayarkan dengan rutin dan memiliki bukti pembayaran',
@@ -316,7 +343,20 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 34522100,
     totalAnggaran: 414265200,
     sumberDana: 'Dana Komite / Swadaya',
-    triwulan: ['TW I', 'TW II', 'TW III', 'TW IV'],
+    bulan: [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ],
     penanggungJawab: 'Dwi Nastiti Ken Utami',
     prioritas: 'Tinggi',
     keluaran: 'Terpenuhinya gaji 11 guru GTY yang telah melayani di SD BOPKRI Gondolayu berdasarkan kasih, integritas dan pelayanan yang tulus.',
@@ -335,7 +375,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 11000000,
     totalAnggaran: 44000000,
     sumberDana: 'BOS Kinerja',
-    triwulan: ['TW I'],
+    bulan: ['Januari', 'Februari'],
     penanggungJawab: 'CB. Yudi Puspa Irawan, S.Pd., Gr.',
     prioritas: 'Tinggi',
     keluaran: 'Siswa terampil menggunakan perangkat komputer sehingga dapat meningkatkan kemampuan siswa untuk berpikir kritis, terarah, dan efektif.',

@@ -517,7 +517,7 @@ function TableRow({
       <td className="py-3 px-3">
         <div className="font-medium text-slate-800">{item.sumberDana}</div>
         <div className="mt-0.5 text-[11px] text-slate-500">
-          {item.triwulan.join(' · ')}
+          {item.bulan ? item.bulan.join(' · ') : '-'}
         </div>
       </td>
       <td className="py-3 px-3">

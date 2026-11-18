@@ -42,12 +42,12 @@ Berdasarkan rincian kegiatan RKT/RKAS berikut:
 - Rincian Belanja: ${rincianBelanja || ''}
 - Sumber Dana: ${sumberDana || 'BOS'}
 
-Tolong berikan respons dalam format JSON valid (tanpa markdown backticks) dengan 2 properti saja:
-1. "keluaran": kalimat keluaran (output) formal sesuai standar dokumen RKT sekolah dasar (contoh: "Terlaksananya ... dengan hasil pencapaian ...").
-2. "keterangan": rincian dokumen pendukung dan indikator keberhasilan (contoh: "Proposal, SK Panitia, daftar hadir, dokumentasi kegiatan, dan laporan pertanggungjawaban (LPJ)").`;
+Tolong berikan respons HANYA dalam format JSON valid (tanpa markdown backticks, tanpa teks pengantar) dengan 2 properti string:
+1. "keluaran": kalimat keluaran (output) formal sesuai standar dokumen RKT sekolah dasar.
+2. "keterangan": rincian dokumen pendukung dan indikator keberhasilan.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-4-hydrogen',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -55,7 +55,6 @@ Tolong berikan respons dalam format JSON valid (tanpa markdown backticks) dengan
     });
 
     const rawText = response.text || '';
-    // Clean potential markdown code blocks if any
     const cleanedText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let data;
@@ -65,13 +64,13 @@ Tolong berikan respons dalam format JSON valid (tanpa markdown backticks) dengan
       data = getFallbackDetails();
     }
 
-    res.json({
+    return res.json({
       keluaran: data.keluaran || getFallbackDetails().keluaran,
       keterangan: data.keterangan || getFallbackDetails().keterangan,
     });
   } catch (error) {
     console.error('AI generation error, using robust fallback:', error);
-    res.json(getFallbackDetails());
+    return res.json(getFallbackDetails());
   }
 });
 

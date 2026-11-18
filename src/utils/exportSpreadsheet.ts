@@ -1,8 +1,8 @@
 import * as XLSX from 'xlsx';
-import { SNP_DETAILS, SNP_LIST, SUMBER_DANA_LIST } from '../data/rkasConstants';
-import { RkasItem, SchoolIdentity, Triwulan } from '../types/rkas';
+import { BULAN_LIST, SNP_DETAILS, SNP_LIST, SUMBER_DANA_LIST } from '../data/rkasConstants';
+import { Bulan, RkasItem, SchoolIdentity } from '../types/rkas';
 import {
-  calculateQuarterlyAllocation,
+  calculateMonthlyAllocation,
   formatDateIndo,
   sanitizeFilename,
 } from './formatters';
@@ -31,7 +31,7 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
       'Harga Satuan (Rp)',
       'Total Anggaran (Rp)',
       'Sumber Dana',
-      'Triwulan Pelaksanaan',
+      'Bulan Pelaksanaan',
       'Penanggung Jawab',
       'Prioritas',
       'Keterangan / Indikator',
@@ -53,7 +53,7 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
       item.hargaSatuan,
       { f: `G${excelRow}*I${excelRow}` },
       item.sumberDana,
-      item.triwulan.join(', '),
+      item.bulan ? item.bulan.join(', ') : '-',
       item.penanggungJawab || '-',
       item.prioritas,
       item.keterangan || '-',
@@ -144,7 +144,7 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
     { wch: 18 }, // Harga Satuan
     { wch: 20 }, // Total Anggaran
     { wch: 22 }, // Sumber Dana
-    { wch: 20 }, // Triwulan
+    { wch: 24 }, // Bulan Pelaksanaan
     { wch: 22 }, // PJ
     { wch: 12 }, // Prioritas
     { wch: 42 }, // Keterangan
@@ -162,7 +162,7 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
 
   XLSX.utils.book_append_sheet(wb, ws1, 'Draf RKAS');
 
-  // --- SHEET 2: REKAP SUMBER DANA & TRIWULAN ---
+  // --- SHEET 2: REKAP SUMBER DANA & BULAN ---
   const totalAll = items.reduce((acc, item) => acc + item.totalAnggaran, 0);
 
   const sumberRows: (string | number)[][] = [
@@ -180,35 +180,36 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
   });
   sumberRows.push(['', 'TOTAL KESELURUHAN', items.length, totalAll, totalAll > 0 ? 100 : 0]);
   sumberRows.push([]);
-  sumberRows.push(['REKAPITULASI PROYEKSI PENCAIRAN PER TRIWULAN']);
-  sumberRows.push(['Triwulan', 'Periode', 'Alokasi Anggaran (Rp)', 'Persentase (%)']);
+  sumberRows.push(['REKAPITULASI PROYEKSI PENCAIRAN PER BULAN']);
+  sumberRows.push(['Bulan Pelaksanaan', 'Alokasi Anggaran (Rp)', 'Persentase (%)']);
 
-  const twTotals: Record<Triwulan, number> = {
-    'TW I': 0,
-    'TW II': 0,
-    'TW III': 0,
-    'TW IV': 0,
+  const bulanTotals: Record<Bulan, number> = {
+    Januari: 0,
+    Februari: 0,
+    Maret: 0,
+    April: 0,
+    Mei: 0,
+    Juni: 0,
+    Juli: 0,
+    Agustus: 0,
+    September: 0,
+    Oktober: 0,
+    November: 0,
+    Desember: 0,
   };
   items.forEach((item) => {
-    const alloc = calculateQuarterlyAllocation(item);
-    twTotals['TW I'] += alloc['TW I'];
-    twTotals['TW II'] += alloc['TW II'];
-    twTotals['TW III'] += alloc['TW III'];
-    twTotals['TW IV'] += alloc['TW IV'];
+    const alloc = calculateMonthlyAllocation(item);
+    BULAN_LIST.forEach((m) => {
+      bulanTotals[m] += alloc[m];
+    });
   });
 
-  const twMeta: { key: Triwulan; period: string }[] = [
-    { key: 'TW I', period: 'Januari – Maret' },
-    { key: 'TW II', period: 'April – Juni' },
-    { key: 'TW III', period: 'Juli – September' },
-    { key: 'TW IV', period: 'Oktober – Desember' },
-  ];
-  twMeta.forEach(({ key, period }) => {
-    const val = twTotals[key];
+  BULAN_LIST.forEach((m) => {
+    const val = bulanTotals[m];
     const pct = totalAll > 0 ? Number(((val / totalAll) * 100).toFixed(2)) : 0;
-    sumberRows.push([key, period, val, pct]);
+    sumberRows.push([m, val, pct]);
   });
-  sumberRows.push(['TOTAL', 'Januari – Desember', totalAll, totalAll > 0 ? 100 : 0]);
+  sumberRows.push(['TOTAL', totalAll, totalAll > 0 ? 100 : 0]);
 
   sumberRows.push([]);
   sumberRows.push(['REKAPITULASI PER 8 STANDAR NASIONAL PENDIDIKAN (SNP)']);
@@ -222,7 +223,7 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
 
   const ws2 = XLSX.utils.aoa_to_sheet(sumberRows);
   ws2['!cols'] = [{ wch: 36 }, { wch: 26 }, { wch: 22 }, { wch: 22 }, { wch: 16 }];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Rekap Sumber & TW');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Rekap Sumber & Bulan');
 
   // --- SHEET 3: MATRIKS RKT BERBASIS 8 SNP ---
   const activityMap = new Map<
@@ -349,7 +350,7 @@ export function exportRkasToCsv(items: RkasItem[], school: SchoolIdentity): void
     'Harga Satuan (Rp)',
     'Total Anggaran (Rp)',
     'Sumber Dana',
-    'Triwulan',
+    'Bulan Pelaksanaan',
     'Penanggung Jawab',
     'Prioritas',
     'Keterangan',
@@ -375,7 +376,7 @@ export function exportRkasToCsv(items: RkasItem[], school: SchoolIdentity): void
     item.hargaSatuan,
     item.totalAnggaran,
     item.sumberDana,
-    item.triwulan.join(' | '),
+    item.bulan ? item.bulan.join(' | ') : '',
     item.penanggungJawab,
     item.prioritas,
     item.keterangan,

@@ -181,7 +181,7 @@ export function PrintPreviewView({
                       {item.sumberDana}
                     </td>
                     <td className="border border-slate-300 py-1.5 px-2">
-                      <div>{item.triwulan.join(', ')}</div>
+                      <div>{item.bulan ? item.bulan.join(', ') : '-'}</div>
                       {item.keterangan && (
                         <div className="text-[10px] text-slate-600 mt-0.5">
                           {item.keterangan}

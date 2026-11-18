@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Calendar, CheckCircle2, FileText, User, Plus, Search } from 'lucide-react';
-import { SNP_DETAILS } from '../data/rkasConstants';
+import { Search, User } from 'lucide-react';
 import { RkasItem, SchoolIdentity } from '../types/rkas';
 import { formatRupiah } from '../utils/formatters';
 
@@ -58,7 +57,6 @@ export function RktView({ items, school, onNavigateToRkas }: RktViewProps) {
             onClick={onNavigateToRkas}
             className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg transition-colors shadow-xs"
           >
-            <Plus className="w-4 h-4" />
             <span>Tambah &amp; Kelola Kegiatan RKAS</span>
           </button>
         </div>
@@ -82,7 +80,7 @@ export function RktView({ items, school, onNavigateToRkas }: RktViewProps) {
                   <th className="py-3 px-3 border border-slate-700 w-32">SASARAN</th>
                   <th className="py-3 px-3 border border-slate-700 w-40">PENANGGUNG JAWAB</th>
                   <th className="py-3 px-3 border border-slate-700 w-32">ANGGARAN</th>
-                  <th className="py-3 px-3 border border-slate-700 w-32">WAKTU PELAKSANAAN</th>
+                  <th className="py-3 px-3 border border-slate-700 w-40">WAKTU PELAKSANAAN (BULAN)</th>
                   <th className="py-3 px-3 border border-slate-700 w-56">KELUARAN (OUTPUT)</th>
                   <th className="py-3 px-3 border border-slate-700 w-52">KETERANGAN</th>
                 </tr>
@@ -119,11 +117,15 @@ export function RktView({ items, school, onNavigateToRkas }: RktViewProps) {
                     </td>
                     <td className="py-3 px-3 border border-slate-200 text-center">
                       <div className="flex flex-wrap items-center justify-center gap-1">
-                        {item.triwulan.map((tw) => (
-                          <span key={tw} className="px-1.5 py-0.5 bg-teal-50 text-teal-800 text-[10px] font-medium rounded border border-teal-200">
-                            {tw}
-                          </span>
-                        ))}
+                        {item.bulan && item.bulan.length > 0 ? (
+                          item.bulan.map((m) => (
+                            <span key={m} className="px-1.5 py-0.5 bg-teal-50 text-teal-800 text-[10px] font-medium rounded border border-teal-200">
+                              {m}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-slate-400 italic">Belum diset</span>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 px-3 border border-slate-200 text-slate-700 leading-relaxed">

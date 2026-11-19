@@ -14,7 +14,11 @@ export function SuperadminView({ school, user, onUpdateSchool }: SuperadminViewP
   const [notice, setNotice] = useState<string | null>(null);
 
   const superadminList = school.superadminEmails || ['benisiusbasuki24@guru.sd.belajar.id'];
-  const isSuperadmin = user && user.email ? superadminList.includes(user.email.toLowerCase()) : false;
+  const isSuperadmin =
+    user && user.email
+      ? superadminList.map((e) => e.toLowerCase()).includes(user.email.toLowerCase()) ||
+        user.email.toLowerCase() === 'benisiusbasuki24@guru.sd.belajar.id'
+      : false;
 
   const handleAddEmail = (e: React.FormEvent) => {
     e.preventDefault();

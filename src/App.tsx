@@ -9,6 +9,7 @@ import {
   deleteDoc,
   doc,
   DocumentData,
+  getDoc,
   getDocs,
   QueryDocumentSnapshot,
   query,
@@ -77,35 +78,64 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const superadminList = school.superadminEmails || ['benisiusbasuki24@guru.sd.belajar.id'];
-  const isSuperadmin = user && user.email ? superadminList.includes(user.email.toLowerCase()) : false;
+  const isSuperadmin =
+    user && user.email
+      ? superadminList.map((e) => e.toLowerCase()).includes(user.email.toLowerCase()) ||
+        user.email.toLowerCase() === 'benisiusbasuki24@guru.sd.belajar.id'
+      : false;
 
-  // Auth listener & Firestore sync with email whitelist verification
+  // Auth listener & Firestore sync with email whitelist verification (cross-device shared school profile & items)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
       if (firebaseUser) {
         const email = firebaseUser.email || '';
-        const whitelist = school.registeredEmails || [
+        
+        // First load the shared school doc to check latest whitelist & superadmin emails
+        let currentSchool = school;
+        try {
+          const schoolDocRef = doc(db, 'schools', 'gondolayu_main');
+          const schoolSnap = await getDoc(schoolDocRef);
+          if (schoolSnap.exists()) {
+            currentSchool = schoolSnap.data() as SchoolIdentity;
+            setSchool(currentSchool);
+          } else {
+            await setDoc(schoolDocRef, {
+              ...DEFAULT_SCHOOL_IDENTITY,
+              updatedAt: new Date().toISOString(),
+            });
+          }
+        } catch (err) {
+          console.error('Error loading shared school profile:', err);
+        }
+
+        const currentSuperadmins = currentSchool.superadminEmails || ['benisiusbasuki24@guru.sd.belajar.id'];
+        const whitelist = currentSchool.registeredEmails || [
           'benisiusbasuki24@guru.sd.belajar.id',
           '@guru.sd.belajar.id',
           '@bopkri.sch.id',
           '@gmail.com',
         ];
 
+        const isSuper =
+          currentSuperadmins.map((e) => e.toLowerCase()).includes(email.toLowerCase()) ||
+          email.toLowerCase() === 'benisiusbasuki24@guru.sd.belajar.id';
+
         const isAllowed =
+          isSuper ||
           whitelist.length === 0 ||
-          superadminList.includes(email.toLowerCase()) ||
           whitelist.some((entry) => {
-            if (entry.startsWith('@')) {
-              return email.toLowerCase().endsWith(entry.toLowerCase());
+            const entryLower = entry.toLowerCase();
+            if (entryLower.startsWith('@')) {
+              return email.toLowerCase().endsWith(entryLower);
             }
-            return email.toLowerCase() === entry.toLowerCase();
+            return email.toLowerCase() === entryLower;
           });
 
         if (!isAllowed) {
           await signOut(auth);
           setUser(null);
           setAuthLoading(false);
-          setToastMessage(`Akses Ditolak: Email (${email}) belum terdaftar.`);
+          setToastMessage(`Akses Ditolak: Email (${email}) belum terdaftar dalam whitelist.`);
           return;
         }
 
@@ -113,12 +143,10 @@ export default function App() {
         setAuthLoading(false);
 
         try {
-          const rkasQuery = query(
-            collection(db, 'rkasItems'),
-            where('userId', '==', firebaseUser.uid)
-          );
-          const rkasSnap = await getDocs(rkasQuery).catch((err: unknown) => {
+          // Load shared rkas items from collection
+          const rkasSnap = await getDocs(collection(db, 'rkasItems')).catch((err: unknown) => {
             handleFirestoreError(err, OperationType.LIST, 'rkasItems');
+            return null;
           });
 
           if (rkasSnap && !rkasSnap.empty) {
@@ -128,16 +156,8 @@ export default function App() {
             });
             setItems(cloudItems);
           }
-
-          const schoolSnap = await getDocs(
-            query(collection(db, 'schools'), where('userId', '==', firebaseUser.uid))
-          ).catch(() => null);
-
-          if (schoolSnap && !schoolSnap.empty) {
-            setSchool(schoolSnap.docs[0].data() as SchoolIdentity);
-          }
         } catch (error) {
-          console.error('Error loading cloud data:', error);
+          console.error('Error loading cloud items:', error);
         }
       } else {
         setUser(null);
@@ -145,9 +165,9 @@ export default function App() {
       }
     });
     return () => unsubscribe();
-  }, [school.registeredEmails]);
+  }, []);
 
-  // Save items and school to localStorage and Firestore
+  // Save items and school to localStorage and shared Firestore document
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_ITEMS_KEY, JSON.stringify(items));
@@ -157,7 +177,7 @@ export default function App() {
     if (user) {
       items.forEach(async (item) => {
         try {
-          const payload = { ...item, userId: user.uid };
+          const payload = { ...item };
           await setDoc(doc(db, 'rkasItems', item.id), payload);
         } catch (error) {
           console.error('Failed to sync item to Firestore:', error);
@@ -175,8 +195,8 @@ export default function App() {
     if (user) {
       const saveSchool = async () => {
         try {
-          const payload = { ...school, userId: user.uid, updatedAt: new Date().toISOString() };
-          await setDoc(doc(db, 'schools', user.uid), payload);
+          const payload = { ...school, updatedAt: new Date().toISOString() };
+          await setDoc(doc(db, 'schools', 'gondolayu_main'), payload);
         } catch (error) {
           console.error('Failed to sync school to Firestore:', error);
         }
@@ -196,21 +216,41 @@ export default function App() {
     try {
       const cred = await signInWithPopup(auth, googleProvider);
       const email = cred.user.email || '';
-      const whitelist = school.registeredEmails || [
+      
+      // Re-fetch latest school profile from shared doc
+      let currentSchool = school;
+      try {
+        const schoolDocRef = doc(db, 'schools', 'gondolayu_main');
+        const schoolSnap = await getDoc(schoolDocRef);
+        if (schoolSnap.exists()) {
+          currentSchool = schoolSnap.data() as SchoolIdentity;
+          setSchool(currentSchool);
+        }
+      } catch {
+        // ignore
+      }
+
+      const currentSuperadmins = currentSchool.superadminEmails || ['benisiusbasuki24@guru.sd.belajar.id'];
+      const whitelist = currentSchool.registeredEmails || [
         'benisiusbasuki24@guru.sd.belajar.id',
         '@guru.sd.belajar.id',
         '@bopkri.sch.id',
         '@gmail.com',
       ];
 
+      const isSuper =
+        currentSuperadmins.map((e) => e.toLowerCase()).includes(email.toLowerCase()) ||
+        email.toLowerCase() === 'benisiusbasuki24@guru.sd.belajar.id';
+
       const isAllowed =
+        isSuper ||
         whitelist.length === 0 ||
-        superadminList.includes(email.toLowerCase()) ||
         whitelist.some((entry) => {
-          if (entry.startsWith('@')) {
-            return email.toLowerCase().endsWith(entry.toLowerCase());
+          const entryLower = entry.toLowerCase();
+          if (entryLower.startsWith('@')) {
+            return email.toLowerCase().endsWith(entryLower);
           }
-          return email.toLowerCase() === entry.toLowerCase();
+          return email.toLowerCase() === entryLower;
         });
 
       if (!isAllowed) {

@@ -5,6 +5,11 @@ export type SumberDana =
   | 'Dana Komite / Swadaya'
   | 'Lainnya';
 
+export interface SumberDanaAllocation {
+  sumberDana: SumberDana;
+  nominal: number;
+}
+
 export type Bulan =
   | 'Januari'
   | 'Februari'
@@ -37,6 +42,7 @@ export interface RkasItem {
   hargaSatuan: number;
   totalAnggaran: number;
   sumberDana: SumberDana;
+  sumberDanaAllocations?: SumberDanaAllocation[];
   bulan: Bulan[];
   penanggungJawab: string;
   prioritas: Prioritas;

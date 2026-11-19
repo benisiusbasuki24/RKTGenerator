@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calculator, Check, Plus, RotateCcw, X, Sparkles, Loader2, Download, Trash2, Edit2, Copy, FileSpreadsheet } from 'lucide-react';
+import { Calculator, Check, RotateCcw, X, Sparkles, Loader2, Download, Trash2, Edit2, Copy, FileSpreadsheet, Plus } from 'lucide-react';
 import {
   BULAN_LIST,
   PRIORITAS_LIST,
@@ -15,6 +15,7 @@ import {
   RkasItem,
   SchoolIdentity,
   SumberDana,
+  SumberDanaAllocation,
 } from '../types/rkas';
 import { formatRupiah } from '../utils/formatters';
 
@@ -31,6 +32,11 @@ interface RkasViewProps {
   onExportCsv: () => void;
 }
 
+interface AllocationFormState {
+  sumberDana: SumberDana;
+  nominal: string;
+}
+
 interface FormState {
   snp: string;
   jenisBelanja: JenisBelanja;
@@ -39,7 +45,7 @@ interface FormState {
   volume: string;
   satuan: string;
   hargaSatuan: string;
-  sumberDana: SumberDana;
+  allocations: AllocationFormState[];
   bulan: Bulan[];
   penanggungJawab: string;
   prioritas: Prioritas;
@@ -55,7 +61,7 @@ const INITIAL_FORM: FormState = {
   volume: '1',
   satuan: 'Paket',
   hargaSatuan: '',
-  sumberDana: 'BOS Reguler',
+  allocations: [{ sumberDana: 'BOS Reguler', nominal: '' }],
   bulan: ['Januari'],
   penanggungJawab: '',
   prioritas: 'Sedang',
@@ -93,6 +99,49 @@ export function RkasView({
   const computedTotal = Math.round(parsedVolume * parsedPrice);
   const activeSnpDetail = SNP_DETAILS.find((s) => s.label === form.snp) ?? SNP_DETAILS[0];
 
+  const totalAllocated = form.allocations.reduce((sum, a) => sum + (Number(a.nominal) || 0), 0);
+
+  const handleAddAllocation = () => {
+    const usedSources = form.allocations.map((a) => a.sumberDana);
+    const available = SUMBER_DANA_LIST.find((sd) => !usedSources.includes(sd));
+    if (!available) return;
+    const remaining = Math.max(0, computedTotal - totalAllocated);
+    setForm({
+      ...form,
+      allocations: [...form.allocations, { sumberDana: available, nominal: String(remaining) }],
+    });
+  };
+
+  const handleRemoveAllocation = (index: number) => {
+    if (form.allocations.length <= 1) return;
+    setForm({
+      ...form,
+      allocations: form.allocations.filter((_, i) => i !== index),
+    });
+  };
+
+  const handleAllocationChange = (index: number, field: 'sumberDana' | 'nominal', val: string) => {
+    const updated = [...form.allocations];
+    if (field === 'sumberDana') {
+      updated[index].sumberDana = val as SumberDana;
+    } else {
+      updated[index].nominal = val;
+    }
+    setForm({ ...form, allocations: updated });
+  };
+
+  const handleAutoSplit = () => {
+    const count = form.allocations.length;
+    if (count === 0) return;
+    const base = Math.floor(computedTotal / count);
+    const rem = computedTotal - base * count;
+    const updated = form.allocations.map((a, i) => ({
+      ...a,
+      nominal: String(base + (i === 0 ? rem : 0)),
+    }));
+    setForm({ ...form, allocations: updated });
+  };
+
   const toggleBulan = (m: Bulan) => {
     setForm((prev) => {
       const exists = prev.bulan.includes(m);
@@ -127,6 +176,7 @@ export function RkasView({
     setErrorMsg('');
     setIsGeneratingAi(true);
     try {
+      const primarySource = form.allocations[0]?.sumberDana || 'BOS Reguler';
       const res = await fetch('/api/ai/generate-details', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -134,7 +184,7 @@ export function RkasView({
           uraianKegiatan: form.uraianKegiatan,
           bidang: form.snp,
           rincianBelanja: form.rincianBelanja,
-          sumberDana: form.sumberDana,
+          sumberDana: primarySource,
         }),
       });
       const text = await res.text();
@@ -179,12 +229,18 @@ export function RkasView({
       return;
     }
 
+    if (Math.abs(totalAllocated - computedTotal) > 1) {
+      setErrorMsg(`Total alokasi sumber dana (${formatRupiah(totalAllocated)}) harus sama dengan Total Anggaran (${formatRupiah(computedTotal)}). Gunakan tombol "Bagikan Merata" untuk otomatis.`);
+      return;
+    }
+
     let finalKeluaran = form.keluaran.trim();
     let finalKeterangan = form.keterangan.trim();
 
     // Auto-generate via AI if empty
     if (!finalKeluaran || !finalKeterangan) {
       try {
+        const primarySource = form.allocations[0]?.sumberDana || 'BOS Reguler';
         const res = await fetch('/api/ai/generate-details', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -192,7 +248,7 @@ export function RkasView({
             uraianKegiatan: form.uraianKegiatan,
             bidang: form.snp,
             rincianBelanja: form.rincianBelanja,
-            sumberDana: form.sumberDana,
+            sumberDana: primarySource,
           }),
         });
         const text = await res.text();
@@ -213,6 +269,13 @@ export function RkasView({
       }
     }
 
+    const sumberDanaAllocations: SumberDanaAllocation[] = form.allocations.map((a) => ({
+      sumberDana: a.sumberDana,
+      nominal: Number(a.nominal) || 0,
+    }));
+
+    const primarySumberDana = sumberDanaAllocations[0]?.sumberDana || 'BOS Reguler';
+
     setErrorMsg('');
     onAddItem(
       {
@@ -224,7 +287,8 @@ export function RkasView({
         satuan: form.satuan.trim() || 'Paket',
         hargaSatuan: parsedPrice,
         totalAnggaran: computedTotal,
-        sumberDana: form.sumberDana,
+        sumberDana: primarySumberDana,
+        sumberDanaAllocations,
         bulan: form.bulan,
         penanggungJawab: form.penanggungJawab.trim() || school.kepalaSekolah,
         prioritas: form.prioritas,
@@ -241,6 +305,11 @@ export function RkasView({
 
   const handleStartEdit = (item: RkasItem) => {
     setEditingId(item.id);
+    const allocations: AllocationFormState[] =
+      item.sumberDanaAllocations && item.sumberDanaAllocations.length > 0
+        ? item.sumberDanaAllocations.map((a) => ({ sumberDana: a.sumberDana, nominal: String(a.nominal) }))
+        : [{ sumberDana: item.sumberDana || 'BOS Reguler', nominal: String(item.totalAnggaran) }];
+
     setForm({
       snp: item.snp,
       jenisBelanja: item.jenisBelanja,
@@ -249,7 +318,7 @@ export function RkasView({
       volume: String(item.volume),
       satuan: item.satuan,
       hargaSatuan: String(item.hargaSatuan),
-      sumberDana: item.sumberDana,
+      allocations,
       bulan: item.bulan && item.bulan.length > 0 ? item.bulan : ['Januari'],
       penanggungJawab: item.penanggungJawab,
       prioritas: item.prioritas,
@@ -268,7 +337,10 @@ export function RkasView({
     const itemYear = item.tahunAnggaran || school.tahunAnggaran;
     const matchTahun = filterTahun === 'ALL' || itemYear === filterTahun;
     const matchSnp = filterSnp === 'ALL' || item.snp === filterSnp;
-    const matchSumber = filterSumber === 'ALL' || item.sumberDana === filterSumber;
+    const matchSumber =
+      filterSumber === 'ALL' ||
+      item.sumberDana === filterSumber ||
+      (item.sumberDanaAllocations && item.sumberDanaAllocations.some((a) => a.sumberDana === filterSumber));
     const matchSearch =
       !searchTerm.trim() ||
       item.uraianKegiatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -289,7 +361,7 @@ export function RkasView({
               {editingId ? 'Edit Rincian Belanja RKAS' : `Tambah Rincian Belanja & Kegiatan RKAS (${school.tahunAnggaran})`}
             </h2>
             <p className="text-xs text-slate-300">
-              Data akan otomatis terikat pada Tahun Anggaran aktif: <strong className="text-teal-300">{school.tahunAnggaran}</strong>.
+              Anda dapat memilih lebih dari satu sumber dana dan menentukan pembagian nominalnya.
             </p>
           </div>
           {editingId && (
@@ -320,7 +392,7 @@ export function RkasView({
               id="form-snp"
               value={form.snp}
               onChange={(e) => setForm({ ...form, snp: e.target.value })}
-              className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15"
+              className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
             >
               {SNP_LIST.map((snp) => (
                 <option key={snp} value={snp}>
@@ -364,15 +436,15 @@ export function RkasView({
                 type="text"
                 value={form.rincianBelanja}
                 onChange={(e) => setForm({ ...form, rincianBelanja: e.target.value })}
-                placeholder="Contoh: Pengadaan 8 set ATK & bahan cetak seleksi siswa"
+                placeholder="Contoh: Pengadaan 8 set ATK & bahan cetak"
                 className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
               />
             </div>
           </div>
 
-          {/* Row 3: Volume, Satuan, Harga Satuan, Sumber Dana */}
+          {/* Row 3: Volume, Satuan, Harga Satuan */}
           <div className="grid grid-cols-2 sm:grid-cols-12 gap-4">
-            <div className="col-span-1 sm:col-span-2">
+            <div className="col-span-1 sm:col-span-3">
               <label htmlFor="form-volume" className="block text-xs font-medium text-slate-700 mb-1.5">
                 Volume
               </label>
@@ -387,7 +459,7 @@ export function RkasView({
               />
             </div>
 
-            <div className="col-span-1 sm:col-span-3">
+            <div className="col-span-1 sm:col-span-4">
               <label htmlFor="form-satuan" className="block text-xs font-medium text-slate-700 mb-1.5">
                 Satuan
               </label>
@@ -407,7 +479,7 @@ export function RkasView({
               </datalist>
             </div>
 
-            <div className="col-span-2 sm:col-span-4">
+            <div className="col-span-2 sm:col-span-5">
               <label htmlFor="form-harga" className="block text-xs font-medium text-slate-700 mb-1.5">
                 Harga Satuan (Rp)
               </label>
@@ -422,34 +494,102 @@ export function RkasView({
                 className="w-full h-10 px-3 text-sm font-mono bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
               />
             </div>
-
-            <div className="col-span-2 sm:col-span-3">
-              <label htmlFor="form-sumber" className="block text-xs font-medium text-slate-700 mb-1.5">
-                Sumber Dana
-              </label>
-              <select
-                id="form-sumber"
-                value={form.sumberDana}
-                onChange={(e) => setForm({ ...form, sumberDana: e.target.value as SumberDana })}
-                className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
-              >
-                {SUMBER_DANA_LIST.map((sd) => (
-                  <option key={sd} value={sd}>
-                    {sd}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
           {/* Computed Total Anggaran Preview */}
           <div className="p-4 bg-teal-50/70 border border-teal-200 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-2 text-teal-900">
               <Calculator className="w-5 h-5 text-teal-700" />
-              <span className="text-xs sm:text-sm font-medium">Total Anggaran Dihitung Otomatis (Volume × Harga Satuan):</span>
+              <span className="text-xs sm:text-sm font-medium">Total Anggaran (Volume × Harga Satuan):</span>
             </div>
             <div className="font-mono text-base sm:text-lg font-bold text-teal-900 tabular-nums">
               {formatRupiah(computedTotal)}
+            </div>
+          </div>
+
+          {/* Multi-Source Funding Allocation Section */}
+          <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="font-display text-xs font-semibold text-slate-900 uppercase">
+                  Pembagian Nominal Sumber Dana (Multi-Sumber)
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Anda dapat memilih satu atau beberapa sumber dana dan merinci alokasi nominalnya. Total alokasi harus sama dengan Total Anggaran.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAutoSplit}
+                  className="px-3 py-1.5 text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200 hover:bg-teal-100 rounded-lg transition-colors"
+                >
+                  Bagikan Merata
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddAllocation}
+                  disabled={form.allocations.length >= SUMBER_DANA_LIST.length}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Tambah Sumber Dana</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {form.allocations.map((alloc, idx) => (
+                <div key={idx} className="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-white p-3 rounded-xl border border-slate-200">
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-[10px] font-medium text-slate-500 mb-1">Sumber Dana #{idx + 1}</label>
+                    <select
+                      value={alloc.sumberDana}
+                      onChange={(e) => handleAllocationChange(idx, 'sumberDana', e.target.value)}
+                      className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
+                    >
+                      {SUMBER_DANA_LIST.map((sd) => (
+                        <option key={sd} value={sd}>
+                          {sd}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex-1 min-w-[180px]">
+                    <label className="block text-[10px] font-medium text-slate-500 mb-1">Nominal Alokasi (Rp)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={alloc.nominal}
+                      onChange={(e) => handleAllocationChange(idx, 'nominal', e.target.value)}
+                      placeholder="0"
+                      className="w-full h-9 px-3 text-xs font-mono bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700 tabular-nums"
+                    />
+                  </div>
+
+                  {form.allocations.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAllocation(idx)}
+                      title="Hapus alokasi"
+                      className="mt-5 p-2 text-slate-400 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between pt-2 text-xs font-medium">
+              <span className="text-slate-600">
+                Total Dialokasikan: <strong className="font-mono text-slate-900">{formatRupiah(totalAllocated)}</strong>
+              </span>
+              <span className={Math.abs(totalAllocated - computedTotal) <= 1 ? 'text-emerald-700 font-semibold' : 'text-red-600 font-semibold'}>
+                {Math.abs(totalAllocated - computedTotal) <= 1 ? '✓ Alokasi Sesuai' : `Selisih: ${formatRupiah(computedTotal - totalAllocated)}`}
+              </span>
             </div>
           </div>
 
@@ -617,7 +757,7 @@ export function RkasView({
         </form>
       </section>
 
-      {/* RKAS Data Table Section with Budget Year Filter */}
+      {/* RKAS Data Table Section with Budget Year & Multi-Source Display */}
       <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -661,7 +801,7 @@ export function RkasView({
           </div>
         </div>
 
-        {/* Filters Toolbar with Budget Year Filter */}
+        {/* Filters Toolbar */}
         <div className="p-4 bg-slate-50 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
             <input
@@ -721,7 +861,7 @@ export function RkasView({
 
         {filteredItems.length === 0 ? (
           <div className="p-12 text-center text-sm text-slate-400">
-            Tidak ada rincian belanja yang cocok dengan filter tahun anggaran atau draf masih kosong.
+            Tidak ada rincian belanja yang cocok dengan filter atau draf masih kosong.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -729,17 +869,17 @@ export function RkasView({
               <thead>
                 <tr className="bg-slate-900 text-white font-bold uppercase text-[11px] tracking-wider text-center">
                   <th className="py-3 px-3 border border-slate-700 w-12">No</th>
-                  <th className="py-3 px-3 border border-slate-700 w-32">Thn Anggaran</th>
-                  <th className="py-3 px-3 border border-slate-700 w-40">SNP</th>
-                  <th className="py-3 px-3 border border-slate-700 w-44">Uraian</th>
-                  <th className="py-3 px-3 border border-slate-700 w-48">Rincian Belanja</th>
-                  <th className="py-3 px-3 border border-slate-700 w-44">Output (Keluaran)</th>
-                  <th className="py-3 px-3 border border-slate-700 w-44">Keterangan</th>
+                  <th className="py-3 px-3 border border-slate-700 w-28">Thn</th>
+                  <th className="py-3 px-3 border border-slate-700 w-36">SNP</th>
+                  <th className="py-3 px-3 border border-slate-700 w-40">Uraian</th>
+                  <th className="py-3 px-3 border border-slate-700 w-44">Rincian Belanja</th>
+                  <th className="py-3 px-3 border border-slate-700 w-40">Output (Keluaran)</th>
+                  <th className="py-3 px-3 border border-slate-700 w-40">Keterangan</th>
                   <th className="py-3 px-3 border border-slate-700 w-24">Volume</th>
                   <th className="py-3 px-3 border border-slate-700 w-28">Harga Satuan</th>
                   <th className="py-3 px-3 border border-slate-700 w-32">Total Anggaran</th>
-                  <th className="py-3 px-3 border border-slate-700 w-28">Sumber Dana</th>
-                  <th className="py-3 px-3 border border-slate-700 w-32">Bulan</th>
+                  <th className="py-3 px-3 border border-slate-700 w-48">Pembagian Sumber Dana</th>
+                  <th className="py-3 px-3 border border-slate-700 w-28">Bulan</th>
                   <th className="py-3 px-3 border border-slate-700 w-24">Aksi</th>
                 </tr>
               </thead>
@@ -776,10 +916,21 @@ export function RkasView({
                     <td className="py-3 px-3 border border-slate-200 text-right font-mono font-semibold text-slate-900 tabular-nums">
                       {formatRupiah(item.totalAnggaran)}
                     </td>
-                    <td className="py-3 px-3 border border-slate-200 text-slate-800">
-                      <span className="inline-block px-2 py-0.5 text-[11px] font-medium bg-slate-100 text-slate-800 rounded">
-                        {item.sumberDana}
-                      </span>
+                    <td className="py-3 px-3 border border-slate-200">
+                      <div className="space-y-1">
+                        {item.sumberDanaAllocations && item.sumberDanaAllocations.length > 0 ? (
+                          item.sumberDanaAllocations.map((alloc, aidx) => (
+                            <div key={aidx} className="flex items-center justify-between gap-2 text-[11px] bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                              <span className="font-medium text-slate-800 truncate">{alloc.sumberDana}</span>
+                              <span className="font-mono font-semibold text-teal-800 tabular-nums">{formatRupiah(alloc.nominal)}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 text-[11px] font-medium bg-slate-100 text-slate-800 rounded">
+                            {item.sumberDana} ({formatRupiah(item.totalAnggaran)})
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-3 border border-slate-200 text-center">
                       <div className="flex flex-wrap justify-center gap-1">

@@ -5,6 +5,7 @@ import {
   RenstraData,
   SchoolIdentity,
   SumberDana,
+  SumberDanaAllocation,
 } from '../types/rkas';
 
 export interface SnpDetail {
@@ -244,6 +245,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 99875,
     totalAnggaran: 799000,
     sumberDana: 'BOS Reguler',
+    sumberDanaAllocations: [{ sumberDana: 'BOS Reguler', nominal: 799000 }],
     bulan: ['Januari', 'Maret', 'Agustus'],
     penanggungJawab: 'FX. Suhari Irawan, S.E.',
     prioritas: 'Tinggi',
@@ -263,6 +265,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 122000,
     totalAnggaran: 976000,
     sumberDana: 'BOS Reguler',
+    sumberDanaAllocations: [{ sumberDana: 'BOS Reguler', nominal: 976000 }],
     bulan: ['Februari', 'Mei', 'Oktober'],
     penanggungJawab: 'Ardi Herwantoro, S.Pd.Jas.',
     prioritas: 'Tinggi',
@@ -282,6 +285,10 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 4700000,
     totalAnggaran: 56400000,
     sumberDana: 'BOS Reguler',
+    sumberDanaAllocations: [
+      { sumberDana: 'BOS Reguler', nominal: 40000000 },
+      { sumberDana: 'BOSP Daerah / BOP', nominal: 16400000 },
+    ],
     bulan: [
       'Januari',
       'Februari',
@@ -314,6 +321,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 34522100,
     totalAnggaran: 414265200,
     sumberDana: 'Dana Komite / Swadaya',
+    sumberDanaAllocations: [{ sumberDana: 'Dana Komite / Swadaya', nominal: 414265200 }],
     bulan: [
       'Januari',
       'Februari',
@@ -346,6 +354,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     hargaSatuan: 11000000,
     totalAnggaran: 44000000,
     sumberDana: 'BOS Kinerja',
+    sumberDanaAllocations: [{ sumberDana: 'BOS Kinerja', nominal: 44000000 }],
     bulan: ['Januari', 'Februari'],
     penanggungJawab: 'CB. Yudi Puspa Irawan, S.Pd., Gr.',
     prioritas: 'Tinggi',

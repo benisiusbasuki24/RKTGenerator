@@ -80,8 +80,13 @@ export function RkasView({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSnp, setFilterSnp] = useState('ALL');
   const [filterSumber, setFilterSumber] = useState('ALL');
+  const [filterTahun, setFilterTahun] = useState('ALL');
 
   const existingActivities = Array.from(new Set(items.map((i) => i.uraianKegiatan.trim()).filter(Boolean)));
+  const availableYears = Array.from(new Set(items.map((i) => i.tahunAnggaran || school.tahunAnggaran))).sort();
+  if (!availableYears.includes(school.tahunAnggaran)) {
+    availableYears.push(school.tahunAnggaran);
+  }
 
   const parsedVolume = Math.max(0, Number(form.volume) || 0);
   const parsedPrice = Math.max(0, Number(form.hargaSatuan) || 0);
@@ -225,6 +230,7 @@ export function RkasView({
         prioritas: form.prioritas,
         keluaran: finalKeluaran,
         keterangan: finalKeterangan,
+        tahunAnggaran: school.tahunAnggaran,
       },
       editingId ?? undefined
     );
@@ -259,6 +265,8 @@ export function RkasView({
   };
 
   const filteredItems = items.filter((item) => {
+    const itemYear = item.tahunAnggaran || school.tahunAnggaran;
+    const matchTahun = filterTahun === 'ALL' || itemYear === filterTahun;
     const matchSnp = filterSnp === 'ALL' || item.snp === filterSnp;
     const matchSumber = filterSumber === 'ALL' || item.sumberDana === filterSumber;
     const matchSearch =
@@ -266,7 +274,7 @@ export function RkasView({
       item.uraianKegiatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.rincianBelanja.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.penanggungJawab && item.penanggungJawab.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchSnp && matchSumber && matchSearch;
+    return matchTahun && matchSnp && matchSumber && matchSearch;
   });
 
   const totalFiltered = filteredItems.reduce((acc, item) => acc + item.totalAnggaran, 0);
@@ -278,10 +286,10 @@ export function RkasView({
         <div className="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-base font-semibold">
-              {editingId ? 'Edit Rincian Belanja RKAS' : 'Tambah Rincian Belanja & Kegiatan RKAS'}
+              {editingId ? 'Edit Rincian Belanja RKAS' : `Tambah Rincian Belanja & Kegiatan RKAS (${school.tahunAnggaran})`}
             </h2>
             <p className="text-xs text-slate-300">
-              Isi kolom dengan lengkap. Kolom Keluaran &amp; Keterangan akan diisi otomatis oleh AI jika dikosongkan.
+              Data akan otomatis terikat pada Tahun Anggaran aktif: <strong className="text-teal-300">{school.tahunAnggaran}</strong>.
             </p>
           </div>
           {editingId && (
@@ -609,7 +617,7 @@ export function RkasView({
         </form>
       </section>
 
-      {/* RKAS Data Table Section with Distinct Columns: Uraian, Rincian Belanja, Output, Keterangan */}
+      {/* RKAS Data Table Section with Budget Year Filter */}
       <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -653,16 +661,31 @@ export function RkasView({
           </div>
         </div>
 
-        {/* Filters Toolbar */}
-        <div className="p-4 bg-slate-50 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Filters Toolbar with Budget Year Filter */}
+        <div className="p-4 bg-slate-50 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Cari uraian, rincian, atau penanggung jawab..."
+              placeholder="Cari uraian, rincian, atau PJ..."
               className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
             />
+          </div>
+
+          <div>
+            <select
+              value={filterTahun}
+              onChange={(e) => setFilterTahun(e.target.value)}
+              className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
+            >
+              <option value="ALL">Semua Tahun Anggaran</option>
+              {availableYears.map((yr) => (
+                <option key={yr} value={yr}>
+                  Tahun Anggaran {yr}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -698,7 +721,7 @@ export function RkasView({
 
         {filteredItems.length === 0 ? (
           <div className="p-12 text-center text-sm text-slate-400">
-            Tidak ada rincian belanja yang cocok dengan filter atau draf masih kosong.
+            Tidak ada rincian belanja yang cocok dengan filter tahun anggaran atau draf masih kosong.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -706,6 +729,7 @@ export function RkasView({
               <thead>
                 <tr className="bg-slate-900 text-white font-bold uppercase text-[11px] tracking-wider text-center">
                   <th className="py-3 px-3 border border-slate-700 w-12">No</th>
+                  <th className="py-3 px-3 border border-slate-700 w-32">Thn Anggaran</th>
                   <th className="py-3 px-3 border border-slate-700 w-40">SNP</th>
                   <th className="py-3 px-3 border border-slate-700 w-44">Uraian</th>
                   <th className="py-3 px-3 border border-slate-700 w-48">Rincian Belanja</th>
@@ -724,6 +748,9 @@ export function RkasView({
                   <tr key={item.id} className="hover:bg-slate-50/70 transition-colors align-top">
                     <td className="py-3 px-3 border border-slate-200 text-center font-mono text-slate-500">
                       {idx + 1}
+                    </td>
+                    <td className="py-3 px-3 border border-slate-200 text-center font-mono font-bold text-teal-800">
+                      {item.tahunAnggaran || school.tahunAnggaran}
                     </td>
                     <td className="py-3 px-3 border border-slate-200 font-semibold text-slate-900">
                       {item.snp}
@@ -800,7 +827,7 @@ export function RkasView({
               </tbody>
               <tfoot>
                 <tr className="bg-slate-100 border-t border-slate-200 font-bold text-slate-900">
-                  <td colSpan={8} className="py-3 px-3 text-right uppercase text-xs">
+                  <td colSpan={9} className="py-3 px-3 text-right uppercase text-xs">
                     Jumlah Total Anggaran RKAS Terfiltrasi:
                   </td>
                   <td className="py-3 px-3 text-right font-mono text-sm text-teal-900 tabular-nums">

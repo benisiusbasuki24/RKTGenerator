@@ -42,6 +42,7 @@ export interface RkasItem {
   prioritas: Prioritas;
   keluaran: string;
   keterangan: string;
+  tahunAnggaran?: string;
   createdAt: string;
 }
 

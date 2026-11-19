@@ -249,6 +249,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     prioritas: 'Tinggi',
     keluaran: 'Murid mendapatkan pengalaman mengikuti lomba OSN dan mampu meningkatkan kompetensi berpikir ilmiah, kritis, dan efektif.',
     keterangan: 'Daftar peserta, sertifikat/piagam, dan hasil peringkat lomba.',
+    tahunAnggaran: '2027',
     createdAt: '2027-01-10T07:55:00.000Z',
   },
   {
@@ -267,6 +268,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     prioritas: 'Tinggi',
     keluaran: 'Murid mendapatkan pengalaman mengikuti lomba O2SN serta meningkatkan kompetensi, sportivitas, disiplin, dan kemampuan berpikir terarah dan efektif.',
     keterangan: 'Daftar peserta, sertifikat/piagam, dan hasil peringkat lomba.',
+    tahunAnggaran: '2027',
     createdAt: '2027-01-10T08:00:00.000Z',
   },
   {
@@ -298,6 +300,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     prioritas: 'Tinggi',
     keluaran: 'Pembayaran daya dan jasa terbayarkan dengan rutin dan memiliki bukti pembayaran',
     keterangan: 'TOR, tanda bukti pembayaran dan kwitansi bulanan.',
+    tahunAnggaran: '2027',
     createdAt: '2027-01-10T08:05:00.000Z',
   },
   {
@@ -329,6 +332,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     prioritas: 'Tinggi',
     keluaran: 'Terpenuhinya gaji 11 guru GTY yang telah melayani di SD BOPKRI Gondolayu berdasarkan kasih, integritas dan pelayanan yang tulus.',
     keterangan: 'Slip gaji, daftar hadir, dan surat keputusan yayasan.',
+    tahunAnggaran: '2027',
     createdAt: '2027-01-10T08:10:00.000Z',
   },
   {
@@ -347,6 +351,7 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
     prioritas: 'Tinggi',
     keluaran: 'Siswa terampil menggunakan perangkat komputer sehingga dapat meningkatkan kemampuan siswa untuk berpikir kritis, terarah, dan efektif.',
     keterangan: 'Faktur pembelian, berita acara serah terima barang, dan foto inventaris.',
+    tahunAnggaran: '2027',
     createdAt: '2027-01-10T08:15:00.000Z',
   },
 ];

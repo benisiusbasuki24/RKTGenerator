@@ -188,7 +188,7 @@ export const SATUAN_PRESETS: string[] = [
 
 export const DEFAULT_SCHOOL_IDENTITY: SchoolIdentity = {
   namaSekolah: 'SD BOPKRI GONDOLAYU',
-  npsn: '20313642',
+  npsn: '20403383',
   jenjang: 'SD',
   tahunAnggaran: '2027',
   alamat: 'Jl. Jend. A. Yani No. 27',

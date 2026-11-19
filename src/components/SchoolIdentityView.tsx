@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, RotateCcw, Plus, Trash2, Mail, ShieldCheck } from 'lucide-react';
+import { Check, RotateCcw } from 'lucide-react';
 import { DEFAULT_SCHOOL_IDENTITY } from '../data/rkasConstants';
 import { SchoolIdentity } from '../types/rkas';
 
@@ -10,7 +10,6 @@ interface SchoolIdentityViewProps {
 
 export function SchoolIdentityView({ school, onSave }: SchoolIdentityViewProps) {
   const [form, setForm] = useState<SchoolIdentity>(school);
-  const [newEmail, setNewEmail] = useState('');
   const [savedNotice, setSavedNotice] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -27,42 +26,22 @@ export function SchoolIdentityView({ school, onSave }: SchoolIdentityViewProps) 
     window.setTimeout(() => setSavedNotice(false), 2500);
   };
 
-  const handleAddEmail = () => {
-    const email = newEmail.trim().toLowerCase();
-    if (!email) return;
-    const currentList = form.registeredEmails || [];
-    if (currentList.includes(email)) return;
-    setForm({
-      ...form,
-      registeredEmails: [...currentList, email],
-    });
-    setNewEmail('');
-  };
-
-  const handleRemoveEmail = (emailToRemove: string) => {
-    const currentList = form.registeredEmails || [];
-    setForm({
-      ...form,
-      registeredEmails: currentList.filter((e) => e !== emailToRemove),
-    });
-  };
-
   return (
-    <section className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 max-w-4xl shadow-xs space-y-8">
+    <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 max-w-4xl shadow-xs space-y-8">
       <div className="pb-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="font-display text-base font-semibold text-slate-900">
-            Identitas Satuan Pendidikan &amp; Hak Akses Akun
+            Identitas Satuan Pendidikan &amp; Pagu Anggaran
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            Atur profil sekolah, kepala sekolah, dan daftar email terdaftar (whitelist) yang diizinkan masuk ke aplikasi.
+            Atur profil sekolah, kepala sekolah, dan pagu anggaran untuk dokumen RKAS.
           </p>
         </div>
 
         {savedNotice && (
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
             <Check className="w-4 h-4" aria-hidden="true" />
-            <span>Identitas &amp; whitelist tersimpan</span>
+            <span>Identitas sekolah tersimpan</span>
           </span>
         )}
       </div>
@@ -267,67 +246,6 @@ export function SchoolIdentityView({ school, onSave }: SchoolIdentityViewProps) 
           </div>
         </div>
 
-        {/* Registered Emails Whitelist Section */}
-        <div className="pt-6 border-t border-slate-200 space-y-4">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-teal-700" />
-            <div>
-              <h3 className="font-display text-sm font-semibold text-slate-900">
-                Daftar Email Terdaftar (Whitelist Akses Masuk Akun)
-              </h3>
-              <p className="text-xs text-slate-500">
-                Hanya alamat email atau domain yang terdaftar di bawah ini yang diizinkan masuk ke aplikasi.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="Masukkan email lengkap (misal: guru@sd.belajar.id) atau domain (@bopkri.sch.id)"
-                className="w-full h-10 pl-9 pr-3 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleAddEmail}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg transition-colors shadow-xs"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Email</span>
-            </button>
-          </div>
-
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 max-h-48 overflow-y-auto space-y-2">
-            {(!form.registeredEmails || form.registeredEmails.length === 0) ? (
-              <p className="text-xs text-slate-500 text-center py-4">
-                Belum ada email whitelist yang dibatasi. Siapa saja dapat masuk. Tambahkan email di atas untuk membatasi akses.
-              </p>
-            ) : (
-              form.registeredEmails.map((email) => (
-                <div
-                  key={email}
-                  className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-lg text-xs"
-                >
-                  <span className="font-mono font-medium text-slate-800">{email}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveEmail(email)}
-                    title="Hapus akses"
-                    className="text-slate-400 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
           <button
             type="button"
@@ -342,7 +260,7 @@ export function SchoolIdentityView({ school, onSave }: SchoolIdentityViewProps) 
             className="inline-flex items-center gap-2 h-10 px-5 text-xs sm:text-sm font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg transition-colors shadow-xs"
           >
             <Check className="w-4 h-4" aria-hidden="true" />
-            <span>Simpan Identitas &amp; Akses Sekolah</span>
+            <span>Simpan Identitas Sekolah</span>
           </button>
         </div>
       </form>

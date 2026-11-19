@@ -17,11 +17,11 @@ import {
 } from 'firebase/firestore';
 import { AppTab, HeaderBar } from './components/HeaderBar';
 import { PrintPreviewView } from './components/PrintPreviewView';
-import { RecapView } from './components/RecapView';
 import { RkasView } from './components/RkasView';
 import { RktView } from './components/RktView';
 import { RenstraView } from './components/RenstraView';
 import { SchoolIdentityView } from './components/SchoolIdentityView';
+import { SuperadminView } from './components/SuperadminView';
 import { SummaryMetrics } from './components/SummaryMetrics';
 import {
   DEFAULT_SCHOOL_IDENTITY,
@@ -41,8 +41,8 @@ import {
 import { RkasItem, SchoolIdentity } from './types/rkas';
 import { exportRkasToCsv, exportRkasToXlsx } from './utils/exportSpreadsheet';
 
-const STORAGE_ITEMS_KEY = 'rkt_rkas_generator_items_v4';
-const STORAGE_SCHOOL_KEY = 'rkt_rkas_generator_school_v3';
+const STORAGE_ITEMS_KEY = 'rkt_rkas_generator_items_v5';
+const STORAGE_SCHOOL_KEY = 'rkt_rkas_generator_school_v4';
 
 function loadSavedItems(): RkasItem[] {
   try {
@@ -76,6 +76,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('rkas');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const superadminList = school.superadminEmails || ['benisiusbasuki24@guru.sd.belajar.id'];
+  const isSuperadmin = user && user.email ? superadminList.includes(user.email.toLowerCase()) : false;
+
   // Auth listener & Firestore sync with email whitelist verification
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
@@ -90,6 +93,7 @@ export default function App() {
 
         const isAllowed =
           whitelist.length === 0 ||
+          superadminList.includes(email.toLowerCase()) ||
           whitelist.some((entry) => {
             if (entry.startsWith('@')) {
               return email.toLowerCase().endsWith(entry.toLowerCase());
@@ -143,7 +147,7 @@ export default function App() {
     return () => unsubscribe();
   }, [school.registeredEmails]);
 
-  // Save to localStorage and Firestore
+  // Save items and school to localStorage and Firestore
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_ITEMS_KEY, JSON.stringify(items));
@@ -201,6 +205,7 @@ export default function App() {
 
       const isAllowed =
         whitelist.length === 0 ||
+        superadminList.includes(email.toLowerCase()) ||
         whitelist.some((entry) => {
           if (entry.startsWith('@')) {
             return email.toLowerCase().endsWith(entry.toLowerCase());
@@ -315,6 +320,7 @@ export default function App() {
         itemCount={items.length}
         user={user}
         authLoading={authLoading}
+        isSuperadmin={isSuperadmin}
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
       />
@@ -338,7 +344,7 @@ export default function App() {
                 onClick={() => setActiveTab('identity')}
                 className="text-teal-700 hover:text-teal-800 font-medium underline underline-offset-4"
               >
-                Ubah Identitas &amp; Akses
+                Ubah Identitas Sekolah
               </button>
             </div>
           </div>
@@ -383,8 +389,6 @@ export default function App() {
           />
         )}
 
-
-
         {activeTab === 'renstra' && <RenstraView school={school} />}
 
         {activeTab === 'print' && (
@@ -400,7 +404,18 @@ export default function App() {
             school={school}
             onSave={(updated) => {
               setSchool(updated);
-              showNotice('Identitas satuan pendidikan dan daftar akses berhasil diperbarui.');
+              showNotice('Identitas satuan pendidikan berhasil diperbarui.');
+            }}
+          />
+        )}
+
+        {activeTab === 'superadmin' && (
+          <SuperadminView
+            school={school}
+            user={user}
+            onUpdateSchool={(updated) => {
+              setSchool(updated);
+              showNotice('Daftar whitelist akses berhasil diperbarui dan disinkronkan ke database.');
             }}
           />
         )}

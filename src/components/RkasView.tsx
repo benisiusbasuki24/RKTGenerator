@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Calculator, Check, Plus, RotateCcw, X, Sparkles, Loader2, Download, Trash2, Edit2, Copy, FileSpreadsheet } from 'lucide-react';
 import {
   BULAN_LIST,
-  KODE_REKENING_PRESETS,
   PRIORITAS_LIST,
   SATUAN_PRESETS,
   SNP_DETAILS,
@@ -34,7 +33,6 @@ interface RkasViewProps {
 
 interface FormState {
   snp: string;
-  kodeRekening: string;
   jenisBelanja: JenisBelanja;
   uraianKegiatan: string;
   rincianBelanja: string;
@@ -51,8 +49,7 @@ interface FormState {
 
 const INITIAL_FORM: FormState = {
   snp: SNP_LIST[0],
-  kodeRekening: KODE_REKENING_PRESETS[0].kode,
-  jenisBelanja: KODE_REKENING_PRESETS[0].jenisBelanja,
+  jenisBelanja: 'Belanja Barang & Jasa',
   uraianKegiatan: '',
   rincianBelanja: '',
   volume: '1',
@@ -73,7 +70,6 @@ export function RkasView({
   onDuplicateItem,
   onDeleteItem,
   onLoadSample,
-  onClearAll,
   onExportXlsx,
   onExportCsv,
 }: RkasViewProps) {
@@ -91,19 +87,6 @@ export function RkasView({
   const parsedPrice = Math.max(0, Number(form.hargaSatuan) || 0);
   const computedTotal = Math.round(parsedVolume * parsedPrice);
   const activeSnpDetail = SNP_DETAILS.find((s) => s.label === form.snp) ?? SNP_DETAILS[0];
-
-  const handlePresetKodeChange = (selectedKode: string) => {
-    const preset = KODE_REKENING_PRESETS.find((p) => p.kode === selectedKode);
-    if (preset) {
-      setForm((prev) => ({
-        ...prev,
-        kodeRekening: preset.kode,
-        jenisBelanja: preset.jenisBelanja,
-      }));
-    } else {
-      setForm((prev) => ({ ...prev, kodeRekening: selectedKode }));
-    }
-  };
 
   const toggleBulan = (m: Bulan) => {
     setForm((prev) => {
@@ -229,7 +212,6 @@ export function RkasView({
     onAddItem(
       {
         snp: form.snp,
-        kodeRekening: form.kodeRekening.trim() || '5.1.02.01.01.0024',
         jenisBelanja: form.jenisBelanja,
         uraianKegiatan: form.uraianKegiatan.trim(),
         rincianBelanja: form.rincianBelanja.trim(),
@@ -255,7 +237,6 @@ export function RkasView({
     setEditingId(item.id);
     setForm({
       snp: item.snp,
-      kodeRekening: item.kodeRekening,
       jenisBelanja: item.jenisBelanja,
       uraianKegiatan: item.uraianKegiatan,
       rincianBelanja: item.rincianBelanja,
@@ -284,7 +265,6 @@ export function RkasView({
       !searchTerm.trim() ||
       item.uraianKegiatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.rincianBelanja.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.kodeRekening.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.penanggungJawab && item.penanggungJawab.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchSnp && matchSumber && matchSearch;
   });
@@ -323,69 +303,33 @@ export function RkasView({
             </div>
           )}
 
-          {/* Row 1: SNP & Kode Rekening */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <div className="md:col-span-6">
-              <label htmlFor="form-snp" className="block text-xs font-medium text-slate-700 mb-1.5">
-                Standar Nasional Pendidikan (SNP) / Program
-              </label>
-              <select
-                id="form-snp"
-                value={form.snp}
-                onChange={(e) => setForm({ ...form, snp: e.target.value })}
-                className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15"
-              >
-                {SNP_LIST.map((snp) => (
-                  <option key={snp} value={snp}>
-                    {snp}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-[11px] text-slate-500 leading-snug">
-                <strong>Fokus RKT:</strong> {activeSnpDetail.fokusRkt}
-              </p>
-            </div>
-
-            <div className="md:col-span-6">
-              <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="form-kode-rekening" className="block text-xs font-medium text-slate-700">
-                  Referensi Kode Rekening Belanja
-                </label>
-                <span className="text-[11px] text-teal-700 font-medium">Dapat diedit bebas</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  id="form-kode-rekening"
-                  type="text"
-                  value={form.kodeRekening}
-                  onChange={(e) => setForm({ ...form, kodeRekening: e.target.value })}
-                  placeholder="Contoh: 5.1.02.01.01.0024"
-                  className="flex-1 h-10 px-3 text-sm font-mono bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15"
-                />
-                <select
-                  aria-label="Pilih Preset Kode Rekening"
-                  onChange={(e) => handlePresetKodeChange(e.target.value)}
-                  className="w-44 h-10 px-2 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-700 focus:outline-none"
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    Pilih Preset...
-                  </option>
-                  {KODE_REKENING_PRESETS.map((preset) => (
-                    <option key={preset.kode} value={preset.kode}>
-                      {preset.kode} - {preset.uraian.slice(0, 24)}...
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          {/* Row 1: SNP / Program */}
+          <div>
+            <label htmlFor="form-snp" className="block text-xs font-medium text-slate-700 mb-1.5">
+              Standar Nasional Pendidikan (SNP) / Program
+            </label>
+            <select
+              id="form-snp"
+              value={form.snp}
+              onChange={(e) => setForm({ ...form, snp: e.target.value })}
+              className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15"
+            >
+              {SNP_LIST.map((snp) => (
+                <option key={snp} value={snp}>
+                  {snp}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-slate-500 leading-snug">
+              <strong>Fokus RKT:</strong> {activeSnpDetail.fokusRkt}
+            </p>
           </div>
 
           {/* Row 2: Uraian Kegiatan & Rincian Belanja */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <div className="md:col-span-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
               <label htmlFor="form-uraian" className="block text-xs font-medium text-slate-700 mb-1.5">
-                Uraian Kegiatan RKT
+                Uraian Kegiatan
               </label>
               <input
                 id="form-uraian"
@@ -394,7 +338,7 @@ export function RkasView({
                 value={form.uraianKegiatan}
                 onChange={(e) => setForm({ ...form, uraianKegiatan: e.target.value })}
                 placeholder="Contoh: Lomba OSN / Pembayaran daya dan jasa"
-                className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15"
+                className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
               />
               <datalist id="existing-activities">
                 {existingActivities.map((act) => (
@@ -403,9 +347,9 @@ export function RkasView({
               </datalist>
             </div>
 
-            <div className="md:col-span-6">
+            <div>
               <label htmlFor="form-rincian" className="block text-xs font-medium text-slate-700 mb-1.5">
-                Rincian Belanja (Barang/Jasa/Honor)
+                Rincian Belanja
               </label>
               <input
                 id="form-rincian"
@@ -413,7 +357,7 @@ export function RkasView({
                 value={form.rincianBelanja}
                 onChange={(e) => setForm({ ...form, rincianBelanja: e.target.value })}
                 placeholder="Contoh: Pengadaan 8 set ATK & bahan cetak seleksi siswa"
-                className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15"
+                className="w-full h-10 px-3 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
               />
             </div>
           </div>
@@ -665,7 +609,7 @@ export function RkasView({
         </form>
       </section>
 
-      {/* RKAS Data Table Section */}
+      {/* RKAS Data Table Section with Distinct Columns: Uraian, Rincian Belanja, Output, Keterangan */}
       <section className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -716,7 +660,7 @@ export function RkasView({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Cari uraian, kode rekening, atau penanggung jawab..."
+              placeholder="Cari uraian, rincian, atau penanggung jawab..."
               className="w-full h-9 px-3 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-teal-700"
             />
           </div>
@@ -762,14 +706,16 @@ export function RkasView({
               <thead>
                 <tr className="bg-slate-900 text-white font-bold uppercase text-[11px] tracking-wider text-center">
                   <th className="py-3 px-3 border border-slate-700 w-12">No</th>
-                  <th className="py-3 px-3 border border-slate-700 w-32">Kode Rekening</th>
-                  <th className="py-3 px-3 border border-slate-700 w-44">SNP</th>
-                  <th className="py-3 px-3 border border-slate-700 w-52">Uraian &amp; Rincian Belanja</th>
-                  <th className="py-3 px-3 border border-slate-700 w-24">Volume &amp; Satuan</th>
+                  <th className="py-3 px-3 border border-slate-700 w-40">SNP</th>
+                  <th className="py-3 px-3 border border-slate-700 w-44">Uraian</th>
+                  <th className="py-3 px-3 border border-slate-700 w-48">Rincian Belanja</th>
+                  <th className="py-3 px-3 border border-slate-700 w-44">Output (Keluaran)</th>
+                  <th className="py-3 px-3 border border-slate-700 w-44">Keterangan</th>
+                  <th className="py-3 px-3 border border-slate-700 w-24">Volume</th>
                   <th className="py-3 px-3 border border-slate-700 w-28">Harga Satuan</th>
                   <th className="py-3 px-3 border border-slate-700 w-32">Total Anggaran</th>
-                  <th className="py-3 px-3 border border-slate-700 w-32">Sumber Dana</th>
-                  <th className="py-3 px-3 border border-slate-700 w-36">Bulan Pelaksanaan</th>
+                  <th className="py-3 px-3 border border-slate-700 w-28">Sumber Dana</th>
+                  <th className="py-3 px-3 border border-slate-700 w-32">Bulan</th>
                   <th className="py-3 px-3 border border-slate-700 w-24">Aksi</th>
                 </tr>
               </thead>
@@ -779,20 +725,20 @@ export function RkasView({
                     <td className="py-3 px-3 border border-slate-200 text-center font-mono text-slate-500">
                       {idx + 1}
                     </td>
-                    <td className="py-3 px-3 border border-slate-200 font-mono text-slate-700">
-                      {item.kodeRekening}
-                    </td>
                     <td className="py-3 px-3 border border-slate-200 font-semibold text-slate-900">
                       {item.snp}
                     </td>
                     <td className="py-3 px-3 border border-slate-200 font-medium text-slate-900">
-                      <div>{item.uraianKegiatan}</div>
-                      <div className="text-slate-600 font-normal mt-0.5">{item.rincianBelanja}</div>
-                      {item.keluaran && (
-                        <div className="text-[11px] text-teal-800 bg-teal-50 px-2 py-1 rounded mt-1 border border-teal-100">
-                          <strong>Keluaran:</strong> {item.keluaran}
-                        </div>
-                      )}
+                      {item.uraianKegiatan}
+                    </td>
+                    <td className="py-3 px-3 border border-slate-200 text-slate-700">
+                      {item.rincianBelanja}
+                    </td>
+                    <td className="py-3 px-3 border border-slate-200 text-teal-900 bg-teal-50/40">
+                      {item.keluaran || '-'}
+                    </td>
+                    <td className="py-3 px-3 border border-slate-200 text-slate-600">
+                      {item.keterangan || '-'}
                     </td>
                     <td className="py-3 px-3 border border-slate-200 text-right font-mono tabular-nums text-slate-700">
                       {item.volume} {item.satuan}
@@ -854,7 +800,7 @@ export function RkasView({
               </tbody>
               <tfoot>
                 <tr className="bg-slate-100 border-t border-slate-200 font-bold text-slate-900">
-                  <td colSpan={6} className="py-3 px-3 text-right uppercase text-xs">
+                  <td colSpan={8} className="py-3 px-3 text-right uppercase text-xs">
                     Jumlah Total Anggaran RKAS Terfiltrasi:
                   </td>
                   <td className="py-3 px-3 text-right font-mono text-sm text-teal-900 tabular-nums">

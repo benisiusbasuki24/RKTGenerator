@@ -1,8 +1,8 @@
 import {
   Bulan,
-  KodeRekeningPreset,
   Prioritas,
   RkasItem,
+  RenstraData,
   SchoolIdentity,
   SumberDana,
 } from '../types/rkas';
@@ -186,59 +186,6 @@ export const SATUAN_PRESETS: string[] = [
   'Tahun',
 ];
 
-export const KODE_REKENING_PRESETS: KodeRekeningPreset[] = [
-  {
-    kode: '5.1.02.01.01.0024',
-    uraian: 'Belanja Alat/Bahan untuk Kegiatan Kantor — Alat Tulis Kantor',
-    jenisBelanja: 'Belanja Barang & Jasa',
-  },
-  {
-    kode: '5.1.02.01.01.0025',
-    uraian: 'Belanja Alat/Bahan untuk Kegiatan Kantor — Kertas dan Cover',
-    jenisBelanja: 'Belanja Barang & Jasa',
-  },
-  {
-    kode: '5.1.02.01.01.0026',
-    uraian: 'Belanja Alat/Bahan untuk Kegiatan Kantor — Bahan Cetak',
-    jenisBelanja: 'Belanja Barang & Jasa',
-  },
-  {
-    kode: '5.1.02.01.01.0052',
-    uraian: 'Belanja Makanan dan Minuman Rapat / Kegiatan',
-    jenisBelanja: 'Belanja Barang & Jasa',
-  },
-  {
-    kode: '5.1.02.02.01.0003',
-    uraian: 'Honorarium Narasumber / Pembahas / Moderator / Pembawa Acara',
-    jenisBelanja: 'Belanja Pegawai / Honorarium',
-  },
-  {
-    kode: '5.1.02.02.01.0013',
-    uraian: 'Belanja Jasa Tenaga Pendidikan (Guru Honorer / Ekstrakurikuler)',
-    jenisBelanja: 'Belanja Pegawai / Honorarium',
-  },
-  {
-    kode: '5.1.02.02.01.0061',
-    uraian: 'Belanja Tagihan Listrik / Internet / Langganan Daya & Jasa',
-    jenisBelanja: 'Belanja Barang & Jasa',
-  },
-  {
-    kode: '5.1.02.03.02.0117',
-    uraian: 'Belanja Pemeliharaan Gedung dan Bangunan Sekolah',
-    jenisBelanja: 'Belanja Barang & Jasa',
-  },
-  {
-    kode: '5.2.02.10.01.0002',
-    uraian: 'Belanja Modal Peralatan Personal Computer / Laptop',
-    jenisBelanja: 'Belanja Modal',
-  },
-  {
-    kode: '5.2.05.01.01.0001',
-    uraian: 'Belanja Modal Buku Umum / Buku Teks Pelajaran Perpustakaan',
-    jenisBelanja: 'Belanja Modal',
-  },
-];
-
 export const DEFAULT_SCHOOL_IDENTITY: SchoolIdentity = {
   namaSekolah: 'SD BOPKRI GONDOLAYU',
   npsn: '20313642',
@@ -258,13 +205,37 @@ export const DEFAULT_SCHOOL_IDENTITY: SchoolIdentity = {
     '@bopkri.sch.id',
     '@gmail.com',
   ],
+  superadminEmails: [
+    'benisiusbasuki24@guru.sd.belajar.id',
+  ],
+};
+
+export const DEFAULT_RENSTRA: RenstraData = {
+  periode: '2026 - 2030',
+  visi: 'Terwujudnya Peserta Didik yang Unggul dalam Prestasi, Berkarakter Kasih, Berwawasan Global, dan Berbudaya Lingkungan Berdasarkan Kasih Kristus.',
+  misi: [
+    'Menyelenggarakan pendidikan holistik berbasis nilai-nilai Kristiani dan budi pekerti luhur.',
+    'Mengembangkan prestasi akademik dan non-akademik melalui pembelajaran inovatif dan berbasis TIK.',
+    'Mewujudkan manajemen sekolah yang transparan, akuntabel, partisipatif, dan berstandar nasional.',
+    'Membina kemitraan yang erat dengan orang tua, masyarakat, dan Yayasan BOPKRI.',
+  ],
+  tujuanStrategis: [
+    'Peningkatan rata-rata nilai kelulusan siswa dan perolehan kejuaraan di tingkat kota dan provinsi.',
+    'Penerapan Kurikulum Satuan Pendidikan (KSP) yang adaptif terhadap perkembangan teknologi dan karakter.',
+    'Penguatan kapasitas pendidik dan tenaga kependidikan melalui pelatihan berkelanjutan.',
+    'Pemenuhan sarana prasarana sekolah yang modern, aman, dan representatif.',
+  ],
+  sasaranMutu: [
+    '100% lulusan terserap di jenjang pendidikan menengah berkualitas.',
+    'Zero bullying dan terciptanya iklim sekolah yang inklusif dan ramah anak.',
+    'Pengelolaan keuangan sekolah berbasis digital dan tepat waktu.',
+  ],
 };
 
 export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
   {
     id: 'rkas-01',
     snp: '1. BIDANG KOMPETENSI KELULUSAN',
-    kodeRekening: '5.1.02.01.01.0026',
     jenisBelanja: 'Belanja Barang & Jasa',
     uraianKegiatan: 'Lomba OSN',
     rincianBelanja: 'Pendanaan seleksi dan pembinaan OSN tingkat kota',
@@ -283,7 +254,6 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
   {
     id: 'rkas-02',
     snp: '1. BIDANG KOMPETENSI KELULUSAN',
-    kodeRekening: '5.1.02.01.01.0026',
     jenisBelanja: 'Belanja Barang & Jasa',
     uraianKegiatan: 'Lomba O2SN',
     rincianBelanja: 'Pembinaan dan perlombaan O2SN 2 cabang olahraga',
@@ -302,7 +272,6 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
   {
     id: 'rkas-03',
     snp: '3. BIDANG PROSES',
-    kodeRekening: '5.1.02.02.01.0061',
     jenisBelanja: 'Belanja Barang & Jasa',
     uraianKegiatan: 'Pembayaran daya dan jasa',
     rincianBelanja: 'Tagihan 2 telpon, internet, 2 listrik, 1 air, dan retribusi sampah (12 bulan)',
@@ -334,7 +303,6 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
   {
     id: 'rkas-04',
     snp: '5. BIDANG TENDIK (SDM)',
-    kodeRekening: '5.1.02.02.01.0013',
     jenisBelanja: 'Belanja Pegawai / Honorarium',
     uraianKegiatan: 'Gaji Guru GTY',
     rincianBelanja: 'Terpenuhinya gaji 11 guru GTY di SD BOPKRI Gondolayu (12 bulan)',
@@ -366,7 +334,6 @@ export const SAMPLE_RKAS_ITEMS: RkasItem[] = [
   {
     id: 'rkas-05',
     snp: '6. BIDANG SARANA PRASARANA',
-    kodeRekening: '5.2.02.10.01.0002',
     jenisBelanja: 'Belanja Modal',
     uraianKegiatan: 'Pembelian PC',
     rincianBelanja: 'Pengadaan 4 unit PC komputer dari dana pemerintah sesuai ketentuan',

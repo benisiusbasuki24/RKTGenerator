@@ -1,7 +1,7 @@
-import { Download, Printer } from 'lucide-react';
-import { SNP_DETAILS } from '../data/rkasConstants';
+import React, { useMemo } from 'react';
+import { Printer, Download, FileSpreadsheet } from 'lucide-react';
 import { RkasItem, SchoolIdentity } from '../types/rkas';
-import { formatDateIndo, formatNumber, formatRupiah } from '../utils/formatters';
+import { formatNumber, formatRupiah, formatDateIndo } from '../utils/formatters';
 
 interface PrintPreviewViewProps {
   items: RkasItem[];
@@ -14,136 +14,111 @@ export function PrintPreviewView({
   school,
   onExportXlsx,
 }: PrintPreviewViewProps) {
-  const grandTotal = items.reduce((sum, item) => sum + item.totalAnggaran, 0);
+  const totalBudget = useMemo(
+    () => items.reduce((sum, item) => sum + item.totalAnggaran, 0),
+    [items]
+  );
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="no-print flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200 rounded-xl px-5 py-4">
+    <div className="space-y-6">
+      {/* Top Action Toolbar */}
+      <div className="no-print bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-xs flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="font-display text-base font-semibold text-slate-900">
-            Pratinjau Dokumen Resmi RKAS
+            Pratinjau Cetak Dokumen RKAS Resmi
           </h2>
           <p className="text-xs text-slate-500">
-            Siap dicetak dalam format kertas A4 Landscape atau disimpan sebagai PDF melalui dialog cetak browser.
+            Format cetak lembar pengesahan dan rincian belanja anggaran sekolah.
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors shadow-xs"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Cetak Dokumen (PDF/Print)</span>
+          </button>
+
           <button
             type="button"
             onClick={onExportXlsx}
-            disabled={items.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg transition-colors shadow-xs"
           >
-            <Download className="w-4 h-4 text-teal-700" aria-hidden="true" />
+            <Download className="w-4 h-4" />
             <span>Unduh Excel (.xlsx)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg transition-colors"
-          >
-            <Printer className="w-4 h-4" aria-hidden="true" />
-            <span>Cetak / Simpan PDF</span>
           </button>
         </div>
       </div>
 
-      {/* Formal Printable Sheet */}
-      <article className="print-only-container bg-white border border-slate-200 rounded-xl p-8 sm:p-10 text-slate-900">
+      {/* Printable Document Sheet */}
+      <div className="bg-white border border-slate-300 rounded-xl p-8 sm:p-12 shadow-sm max-w-[1440px] mx-auto text-slate-900 print:shadow-none print:border-none print:p-0">
         {/* Document Header */}
-        <div className="text-center border-b-2 border-slate-900 pb-4">
-          <h1 className="font-display text-lg font-bold tracking-tight uppercase">
-            Rencana Kegiatan dan Anggaran Sekolah (RKAS)
+        <div className="text-center space-y-2 pb-6 border-b-2 border-slate-900">
+          <h3 className="font-display text-sm sm:text-base font-semibold tracking-wider uppercase text-slate-700">
+            YAYASAN PENDIDIKAN KRISTEN (BOPKRI)
+          </h3>
+          <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight uppercase">
+            RENCANA KEGIATAN DAN ANGGARAN SEKOLAH (RKAS)
           </h1>
-          <p className="text-sm font-semibold mt-0.5">
-            Tahun Anggaran {school.tahunAnggaran}
-          </p>
-          <p className="text-xs text-slate-600 mt-1">
-            {school.namaSekolah} · NPSN {school.npsn} · {school.alamat},{' '}
-            {school.kecamatanKabKota}
+          <h2 className="font-display text-lg font-bold text-teal-800 uppercase">
+            {school.namaSekolah}
+          </h2>
+          <p className="text-xs text-slate-600">
+            NPSN: {school.npsn} &bull; Alamat: {school.alamat}, {school.kecamatanKabKota} &bull; Tahun Anggaran: {school.tahunAnggaran}
           </p>
         </div>
 
-        {/* School Metadata */}
-        <div className="grid grid-cols-2 gap-6 py-4 text-xs border-b border-slate-200">
-          <div className="space-y-1">
-            <div className="flex">
-              <span className="w-36 text-slate-500">Satuan Pendidikan</span>
-              <span className="font-semibold">: {school.namaSekolah}</span>
-            </div>
-            <div className="flex">
-              <span className="w-36 text-slate-500">NPSN / Jenjang</span>
-              <span>
-                : {school.npsn} ({school.jenjang})
-              </span>
-            </div>
-            <div className="flex">
-              <span className="w-36 text-slate-500">Kecamatan / Kab-Kota</span>
-              <span>: {school.kecamatanKabKota}</span>
-            </div>
+        {/* School Context Metadata */}
+        <div className="my-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div>
+            <span className="text-slate-500 block">Jenjang Pendidikan</span>
+            <strong className="text-slate-900 font-semibold">{school.jenjang}</strong>
           </div>
-          <div className="space-y-1">
-            <div className="flex">
-              <span className="w-36 text-slate-500">Tahun Anggaran</span>
-              <span className="font-semibold">: {school.tahunAnggaran}</span>
-            </div>
-            <div className="flex">
-              <span className="w-36 text-slate-500">Pagu Anggaran</span>
-              <span className="font-mono tabular-nums">
-                : {formatRupiah(school.paguAnggaran)}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="w-36 text-slate-500">Total Draf RKAS</span>
-              <span className="font-mono font-semibold tabular-nums">
-                : {formatRupiah(grandTotal)}
-              </span>
-            </div>
+          <div>
+            <span className="text-slate-500 block">Pagu Total Anggaran</span>
+            <strong className="text-teal-900 font-mono font-bold">{formatRupiah(school.paguAnggaran)}</strong>
+          </div>
+          <div>
+            <span className="text-slate-500 block">Total Draf Anggaran</span>
+            <strong className="text-slate-900 font-mono font-bold">{formatRupiah(totalBudget)}</strong>
+          </div>
+          <div>
+            <span className="text-slate-500 block">Tanggal Dokumen</span>
+            <strong className="text-slate-900">{formatDateIndo(school.tanggalDokumen)}</strong>
           </div>
         </div>
 
-        {/* Formal RKAS Table */}
+        {/* Formal RKAS Table with Distinct Columns */}
         <div className="mt-5 overflow-x-auto">
           <table className="w-full border-collapse border border-slate-300 text-[11px]">
             <thead>
-              <tr className="bg-slate-100 text-slate-900 font-semibold">
-                <th className="border border-slate-300 py-2 px-2 text-center w-8">
-                  No
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-left">
-                  Kode Rekening
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-left">
-                  Uraian Kegiatan & SNP
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-left">
-                  Rincian Belanja
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-right">
-                  Vol
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-left">
-                  Satuan
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-right">
-                  Harga Satuan
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-right">
-                  Jumlah (Rp)
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-left">
-                  Sumber Dana
-                </th>
-                <th className="border border-slate-300 py-2 px-2 text-left">
-                  Keterangan / TW
-                </th>
+              <tr className="bg-slate-100 text-slate-900 font-semibold text-center">
+                <th className="border border-slate-300 py-2 px-2 w-8">No</th>
+                <th className="border border-slate-300 py-2 px-2 text-left">SNP</th>
+                <th className="border border-slate-300 py-2 px-2 text-left">Uraian Kegiatan</th>
+                <th className="border border-slate-300 py-2 px-2 text-left">Rincian Belanja</th>
+                <th className="border border-slate-300 py-2 px-2 text-left">Output (Keluaran)</th>
+                <th className="border border-slate-300 py-2 px-2 text-left">Keterangan</th>
+                <th className="border border-slate-300 py-2 px-2 text-right">Vol</th>
+                <th className="border border-slate-300 py-2 px-2 text-left">Satuan</th>
+                <th className="border border-slate-300 py-2 px-2 text-right">Harga Satuan</th>
+                <th className="border border-slate-300 py-2 px-2 text-right">Jumlah (Rp)</th>
+                <th className="border border-slate-300 py-2 px-2 text-left">Sumber Dana</th>
+                <th className="border border-slate-300 py-2 px-2 text-center">Bulan</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={12}
                     className="border border-slate-300 py-8 text-center text-slate-500"
                   >
                     Belum ada rincian belanja pada draf RKAS.
@@ -155,15 +130,20 @@ export function PrintPreviewView({
                     <td className="border border-slate-300 py-1.5 px-2 text-center font-mono tabular-nums">
                       {idx + 1}
                     </td>
-                    <td className="border border-slate-300 py-1.5 px-2 font-mono tabular-nums whitespace-nowrap">
-                      {item.kodeRekening}
+                    <td className="border border-slate-300 py-1.5 px-2 font-semibold">
+                      {item.snp}
                     </td>
-                    <td className="border border-slate-300 py-1.5 px-2">
-                      <div className="font-medium">{item.uraianKegiatan}</div>
-                      <div className="text-[10px] text-slate-600">{item.snp}</div>
+                    <td className="border border-slate-300 py-1.5 px-2 font-medium">
+                      {item.uraianKegiatan}
                     </td>
-                    <td className="border border-slate-300 py-1.5 px-2">
+                    <td className="border border-slate-300 py-1.5 px-2 text-slate-700">
                       {item.rincianBelanja}
+                    </td>
+                    <td className="border border-slate-300 py-1.5 px-2 text-teal-900 bg-teal-50/20">
+                      {item.keluaran || '-'}
+                    </td>
+                    <td className="border border-slate-300 py-1.5 px-2 text-slate-600">
+                      {item.keterangan || '-'}
                     </td>
                     <td className="border border-slate-300 py-1.5 px-2 text-right font-mono tabular-nums">
                       {formatNumber(item.volume)}
@@ -180,13 +160,8 @@ export function PrintPreviewView({
                     <td className="border border-slate-300 py-1.5 px-2 whitespace-nowrap">
                       {item.sumberDana}
                     </td>
-                    <td className="border border-slate-300 py-1.5 px-2">
-                      <div>{item.bulan ? item.bulan.join(', ') : '-'}</div>
-                      {item.keterangan && (
-                        <div className="text-[10px] text-slate-600 mt-0.5">
-                          {item.keterangan}
-                        </div>
-                      )}
+                    <td className="border border-slate-300 py-1.5 px-2 text-center">
+                      {item.bulan ? item.bulan.join(', ') : '-'}
                     </td>
                   </tr>
                 ))
@@ -195,107 +170,47 @@ export function PrintPreviewView({
             <tfoot>
               <tr className="bg-slate-100 font-bold">
                 <td
-                  colSpan={7}
+                  colSpan={9}
                   className="border border-slate-300 py-2 px-3 text-right"
                 >
-                  JUMLAH TOTAL ANGGARAN RKAS
+                  JUMLAH TOTAL ANGGARAN RKAS:
                 </td>
-                <td className="border border-slate-300 py-2 px-2 text-right font-mono tabular-nums whitespace-nowrap">
-                  {formatRupiah(grandTotal)}
+                <td
+                  colSpan={3}
+                  className="border border-slate-300 py-2 px-3 text-right font-mono text-teal-900 tabular-nums"
+                >
+                  {formatRupiah(totalBudget)}
                 </td>
-                <td colSpan={2} className="border border-slate-300 py-2 px-2" />
               </tr>
             </tfoot>
           </table>
         </div>
 
-        {/* 8 SNP Summary Table */}
-        <div className="mt-6">
-          <h2 className="font-display text-xs font-bold uppercase tracking-wide text-slate-800 mb-2">
-            Rekapitulasi Anggaran per 8 Standar Nasional Pendidikan (SNP)
-          </h2>
-          <table className="w-full border-collapse border border-slate-300 text-[11px]">
-            <thead>
-              <tr className="bg-slate-100 text-slate-900 font-semibold">
-                <th className="border border-slate-300 py-1.5 px-2 text-center w-10">
-                  Kode
-                </th>
-                <th className="border border-slate-300 py-1.5 px-2 text-left">
-                  Standar Nasional Pendidikan
-                </th>
-                <th className="border border-slate-300 py-1.5 px-2 text-right w-20">
-                  Item
-                </th>
-                <th className="border border-slate-300 py-1.5 px-2 text-right w-36">
-                  Jumlah Anggaran (Rp)
-                </th>
-                <th className="border border-slate-300 py-1.5 px-2 text-right w-20">
-                  Persentase
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {SNP_DETAILS.map((snp) => {
-                const matching = items.filter((i) => i.snp === snp.label);
-                const subtotal = matching.reduce(
-                  (s, i) => s + i.totalAnggaran,
-                  0
-                );
-                const pct =
-                  grandTotal > 0 ? ((subtotal / grandTotal) * 100).toFixed(1) : '0.0';
-                return (
-                  <tr key={snp.kode}>
-                    <td className="border border-slate-300 py-1 px-2 text-center font-mono tabular-nums">
-                      {snp.kode}
-                    </td>
-                    <td className="border border-slate-300 py-1 px-2">
-                      {snp.label}
-                    </td>
-                    <td className="border border-slate-300 py-1 px-2 text-right font-mono tabular-nums">
-                      {matching.length}
-                    </td>
-                    <td className="border border-slate-300 py-1 px-2 text-right font-mono tabular-nums">
-                      {formatRupiah(subtotal)}
-                    </td>
-                    <td className="border border-slate-300 py-1 px-2 text-right font-mono tabular-nums">
-                      {pct}%
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
         {/* Signature Block */}
-        <div className="mt-10 grid grid-cols-2 gap-12 text-xs">
-          <div className="text-center">
-            <p>Mengetahui,</p>
-            <p className="font-semibold">Kepala {school.namaSekolah}</p>
-            <div className="h-16" />
-            <p className="font-semibold underline underline-offset-4">
-              {school.kepalaSekolah || '...........................'}
-            </p>
-            <p className="mt-0.5 text-slate-600">
-              NIP. {school.nipKepalaSekolah || '-'}
-            </p>
+        <div className="mt-12 pt-6 grid grid-cols-2 gap-8 text-xs sm:text-sm page-break-inside-avoid">
+          <div className="text-center space-y-16">
+            <div>
+              <p className="font-medium">Mengetahui,</p>
+              <p className="font-semibold">Kepala Sekolah</p>
+            </div>
+            <div>
+              <p className="font-bold underline">{school.kepalaSekolah}</p>
+              <p className="font-mono text-xs text-slate-600">NIP. {school.nipKepalaSekolah}</p>
+            </div>
           </div>
-          <div className="text-center">
-            <p>
-              {school.kecamatanKabKota.split(',').pop()?.trim() || 'Sekolah'},{' '}
-              {formatDateIndo(school.tanggalDokumen)}
-            </p>
-            <p className="font-semibold">Bendahara Sekolah</p>
-            <div className="h-16" />
-            <p className="font-semibold underline underline-offset-4">
-              {school.bendahara || '...........................'}
-            </p>
-            <p className="mt-0.5 text-slate-600">
-              NIP. {school.nipBendahara || '-'}
-            </p>
+
+          <div className="text-center space-y-16">
+            <div>
+              <p className="font-medium">Dibuat oleh,</p>
+              <p className="font-semibold">Bendahara Sekolah</p>
+            </div>
+            <div>
+              <p className="font-bold underline">{school.bendahara}</p>
+              <p className="font-mono text-xs text-slate-600">NIP. {school.nipBendahara}</p>
+            </div>
           </div>
         </div>
-      </article>
+      </div>
     </div>
   );
 }

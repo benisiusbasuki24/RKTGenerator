@@ -1,7 +1,7 @@
-import { Download, LogIn, LogOut, ShieldCheck, User as UserIcon } from 'lucide-react';
+import { Download, LogIn, LogOut, ShieldCheck, User as UserIcon, ShieldAlert } from 'lucide-react';
 import { User } from '../firebase';
 
-export type AppTab = 'rkt' | 'rkas' | 'renstra' | 'print' | 'identity';
+export type AppTab = 'rkt' | 'rkas' | 'renstra' | 'print' | 'identity' | 'superadmin';
 
 interface HeaderBarProps {
   activeTab: AppTab;
@@ -10,17 +10,10 @@ interface HeaderBarProps {
   itemCount: number;
   user: User | null;
   authLoading: boolean;
+  isSuperadmin: boolean;
   onSignIn: () => void;
   onSignOut: () => void;
 }
-
-const NAV_ITEMS: { id: AppTab; label: string }[] = [
-  { id: 'rkt', label: 'RKT' },
-  { id: 'rkas', label: 'RKAS' },
-  { id: 'renstra', label: 'RENSTRA' },
-  { id: 'print', label: 'Pratinjau Cetak' },
-  { id: 'identity', label: 'Identitas Sekolah' },
-];
 
 export function HeaderBar({
   activeTab,
@@ -29,9 +22,22 @@ export function HeaderBar({
   itemCount,
   user,
   authLoading,
+  isSuperadmin,
   onSignIn,
   onSignOut,
 }: HeaderBarProps) {
+  const navItems: { id: AppTab; label: string }[] = [
+    { id: 'rkt', label: 'RKT' },
+    { id: 'rkas', label: 'RKAS' },
+    { id: 'renstra', label: 'RENSTRA' },
+    { id: 'print', label: 'Pratinjau Cetak' },
+    { id: 'identity', label: 'Identitas Sekolah' },
+  ];
+
+  if (isSuperadmin) {
+    navItems.push({ id: 'superadmin', label: 'Superadmin' });
+  }
+
   return (
     <header className="no-print sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-8">
@@ -50,20 +56,21 @@ export function HeaderBar({
           aria-label="Navigasi utama"
           className="hidden md:flex items-center gap-6 h-full"
         >
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => onTabChange(item.id)}
-                className={`relative h-full inline-flex items-center text-sm font-medium transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 ${
+                className={`relative h-full inline-flex items-center gap-1.5 text-sm font-medium transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 ${
                   isActive
                     ? 'text-teal-800 font-semibold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                {item.label}
+                {item.id === 'superadmin' && <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />}
+                <span>{item.label}</span>
                 {isActive && (
                   <span
                     aria-hidden="true"
@@ -134,7 +141,7 @@ export function HeaderBar({
         aria-label="Navigasi seluler"
         className="flex md:hidden items-center gap-4 px-4 py-2 border-t border-slate-100 overflow-x-auto"
       >
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive = activeTab === item.id;
           return (
             <button

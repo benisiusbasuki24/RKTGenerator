@@ -29,7 +29,6 @@ export type JenisBelanja =
 export interface RkasItem {
   id: string;
   snp: string;
-  kodeRekening: string;
   jenisBelanja: JenisBelanja;
   uraianKegiatan: string;
   rincianBelanja: string;
@@ -60,11 +59,13 @@ export interface SchoolIdentity {
   paguAnggaran: number;
   tanggalDokumen: string;
   registeredEmails?: string[];
+  superadminEmails?: string[];
 }
 
-export interface KodeRekeningPreset {
-  kode: string;
-  uraian: string;
-  jenisBelanja: JenisBelanja;
+export interface RenstraData {
+  visi: string;
+  misi: string[];
+  tujuanStrategis: string[];
+  sasaranMutu: string[];
+  periode: string;
 }
-

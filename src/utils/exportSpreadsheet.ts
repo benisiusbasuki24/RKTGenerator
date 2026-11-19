@@ -21,11 +21,12 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
     [],
     [
       'No',
-      'Kode Rekening',
       'Standar Nasional Pendidikan (SNP)',
       'Jenis Belanja',
-      'Uraian Kegiatan (RKT)',
+      'Uraian Kegiatan',
       'Rincian Belanja',
+      'Output (Keluaran)',
+      'Keterangan / Dokumen',
       'Volume',
       'Satuan',
       'Harga Satuan (Rp)',
@@ -34,7 +35,6 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
       'Bulan Pelaksanaan',
       'Penanggung Jawab',
       'Prioritas',
-      'Keterangan / Indikator',
     ],
   ];
 
@@ -43,20 +43,20 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
     const excelRow = startDataRow + idx;
     sheet1Rows.push([
       idx + 1,
-      item.kodeRekening || '-',
       item.snp,
       item.jenisBelanja,
       item.uraianKegiatan,
       item.rincianBelanja,
+      item.keluaran || '-',
+      item.keterangan || '-',
       item.volume,
       item.satuan,
       item.hargaSatuan,
-      { f: `G${excelRow}*I${excelRow}` },
+      { f: `H${excelRow}*J${excelRow}` },
       item.sumberDana,
       item.bulan ? item.bulan.join(', ') : '-',
       item.penanggungJawab || '-',
       item.prioritas,
-      item.keterangan || '-',
     ]);
   });
 
@@ -67,20 +67,20 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
           '',
           '',
           '',
-          '',
           'JUMLAH TOTAL ANGGARAN RKAS',
           '',
           '',
           '',
           '',
-          { f: `SUM(J${startDataRow}:J${endDataRow})` },
           '',
+          '',
+          { f: `SUM(K${startDataRow}:K${endDataRow})` },
           '',
           '',
           '',
           '',
         ]
-      : ['', '', '', '', 'JUMLAH TOTAL ANGGARAN RKAS', '', '', '', '', 0, '', '', '', '', ''];
+      : ['', '', '', 'JUMLAH TOTAL ANGGARAN RKAS', '', '', '', '', '', '', 0, '', '', '', ''];
 
   sheet1Rows.push(totalRow);
   sheet1Rows.push([]);
@@ -134,26 +134,26 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
   const ws1 = XLSX.utils.aoa_to_sheet(sheet1Rows);
   ws1['!cols'] = [
     { wch: 5 },  // No
-    { wch: 20 }, // Kode Rekening
     { wch: 32 }, // SNP
     { wch: 24 }, // Jenis Belanja
-    { wch: 36 }, // Uraian Kegiatan
+    { wch: 36 }, // Uraian
     { wch: 38 }, // Rincian Belanja
+    { wch: 32 }, // Output
+    { wch: 32 }, // Keterangan
     { wch: 10 }, // Volume
     { wch: 14 }, // Satuan
     { wch: 18 }, // Harga Satuan
     { wch: 20 }, // Total Anggaran
     { wch: 22 }, // Sumber Dana
-    { wch: 24 }, // Bulan Pelaksanaan
+    { wch: 24 }, // Bulan
     { wch: 22 }, // PJ
     { wch: 12 }, // Prioritas
-    { wch: 42 }, // Keterangan
   ];
 
-  // Apply number format to currency columns in Sheet 1
+  // Apply number format to currency columns in Sheet 1 (Harga Satuan = col 9, Total = col 10)
   for (let r = startDataRow - 1; r <= startDataRow + items.length; r++) {
-    const priceCell = ws1[XLSX.utils.encode_cell({ r, c: 8 })];
-    const totalCell = ws1[XLSX.utils.encode_cell({ r, c: 9 })];
+    const priceCell = ws1[XLSX.utils.encode_cell({ r, c: 9 })];
+    const totalCell = ws1[XLSX.utils.encode_cell({ r, c: 10 })];
     if (priceCell) priceCell.z = '#,##0';
     if (totalCell) totalCell.z = '#,##0';
   }
@@ -340,11 +340,12 @@ export function exportRkasToXlsx(items: RkasItem[], school: SchoolIdentity): voi
 export function exportRkasToCsv(items: RkasItem[], school: SchoolIdentity): void {
   const headers = [
     'No',
-    'Kode Rekening',
     'Standar Nasional Pendidikan',
     'Jenis Belanja',
     'Uraian Kegiatan',
     'Rincian Belanja',
+    'Output (Keluaran)',
+    'Keterangan',
     'Volume',
     'Satuan',
     'Harga Satuan (Rp)',
@@ -353,7 +354,6 @@ export function exportRkasToCsv(items: RkasItem[], school: SchoolIdentity): void
     'Bulan Pelaksanaan',
     'Penanggung Jawab',
     'Prioritas',
-    'Keterangan',
   ];
 
   const escapeCsv = (val: string | number): string => {
@@ -366,11 +366,12 @@ export function exportRkasToCsv(items: RkasItem[], school: SchoolIdentity): void
 
   const rows = items.map((item, idx) => [
     idx + 1,
-    item.kodeRekening,
     item.snp,
     item.jenisBelanja,
     item.uraianKegiatan,
     item.rincianBelanja,
+    item.keluaran,
+    item.keterangan,
     item.volume,
     item.satuan,
     item.hargaSatuan,
@@ -379,12 +380,10 @@ export function exportRkasToCsv(items: RkasItem[], school: SchoolIdentity): void
     item.bulan ? item.bulan.join(' | ') : '',
     item.penanggungJawab,
     item.prioritas,
-    item.keterangan,
   ]);
 
   const totalAll = items.reduce((acc, item) => acc + item.totalAnggaran, 0);
   rows.push([
-    '',
     '',
     '',
     '',
@@ -393,8 +392,9 @@ export function exportRkasToCsv(items: RkasItem[], school: SchoolIdentity): void
     '',
     '',
     '',
-    totalAll,
     '',
+    '',
+    totalAll,
     '',
     '',
     '',
